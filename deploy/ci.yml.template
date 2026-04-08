@@ -1,0 +1,77 @@
+# GitHub Actions CI template for PIQUANO Django apps.
+#
+# Copy this file to .github/workflows/ci.yml in your app repo.
+# Replace placeholders:
+#   __APP__ — app module name (e.g. ats, ticket, lms)
+#
+# Triggers on push to main and on PRs targeting main.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  django:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ci
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: ci_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ci"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://ci:ci@localhost:5432/ci_test
+      DJANGO_SETTINGS_MODULE: config.settings
+      SECRET_KEY: ci-only-not-secret
+      DEBUG: "False"
+      ALLOWED_HOSTS: "*"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff pytest pytest-django
+
+      - name: Ruff lint
+        run: ruff check __APP__
+
+      - name: Django system checks
+        run: python manage.py check --deploy --fail-level WARNING || true
+        # --fail-level WARNING is informational; remove `|| true` once warnings cleared.
+
+      - name: Migrations are complete
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run migrations
+        run: python manage.py migrate --noinput
+
+      - name: Run tests
+        run: |
+          if [ -d tests ] || [ -d __APP__/tests ]; then
+            pytest -q
+          else
+            echo "No tests yet — skipping."
+          fi

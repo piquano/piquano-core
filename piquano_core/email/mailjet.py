@@ -15,12 +15,12 @@ Settings (read by :meth:`MailjetClient.from_settings`):
 
 The ``MAILJET_*`` prefix matches the existing CRM convention; do not rename.
 """
+
 from __future__ import annotations
 
 import functools
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 import requests
 from requests.adapters import HTTPAdapter
@@ -84,7 +84,7 @@ class MailjetClient:
 
     @classmethod
     @functools.lru_cache(maxsize=1)
-    def from_settings(cls) -> "MailjetClient":
+    def from_settings(cls) -> MailjetClient:
         from django.conf import settings
 
         api_key = getattr(settings, "MAILJET_API_KEY", "")
@@ -114,9 +114,9 @@ class MailjetClient:
         to_name: str,
         subject: str,
         html_body: str,
-        text_body: Optional[str] = None,
-        unsubscribe_url: Optional[str] = None,
-        custom_id: Optional[str] = None,
+        text_body: str | None = None,
+        unsubscribe_url: str | None = None,
+        custom_id: str | None = None,
     ) -> MailjetResult:
         """Send a single transactional email.
 

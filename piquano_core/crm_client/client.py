@@ -22,6 +22,7 @@ Usage::
     crm = CRMClient.from_settings()  # cached singleton
     contact = crm.get_contact(42)
 """
+
 from __future__ import annotations
 
 import functools
@@ -78,7 +79,7 @@ class CRMClient:
 
     @classmethod
     @functools.lru_cache(maxsize=1)
-    def from_settings(cls) -> "CRMClient":
+    def from_settings(cls) -> CRMClient:
         """Build (and cache) a client from Django settings."""
         from django.conf import settings
 
@@ -86,9 +87,7 @@ class CRMClient:
         token = getattr(settings, "PIQUANO_CRM_API_TOKEN", "")
         timeout = getattr(settings, "PIQUANO_CRM_TIMEOUT", DEFAULT_TIMEOUT)
         if not base_url or not token:
-            raise CRMClientError(
-                "PIQUANO_CRM_BASE_URL and PIQUANO_CRM_API_TOKEN must be set"
-            )
+            raise CRMClientError("PIQUANO_CRM_BASE_URL and PIQUANO_CRM_API_TOKEN must be set")
         return cls(base_url=base_url, api_token=token, timeout=timeout)
 
     # ----- low-level ----------------------------------------------------------

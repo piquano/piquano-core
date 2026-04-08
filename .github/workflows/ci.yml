@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff
+          pip install -e ".[dev]"
+
+      - name: Ruff lint
+        run: ruff check piquano_core
+
+      - name: Ruff format check
+        run: ruff format --check piquano_core
+
+      - name: Compile-check
+        run: python -m compileall -q piquano_core
+
+      - name: Pytest (placeholder — runs only if tests/ exists)
+        run: |
+          if [ -d tests ]; then
+            pytest -q
+          else
+            echo "No tests/ directory yet — skipping."
+          fi
+
+  bash-shellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Shellcheck deploy templates
+        run: |
+          # Templates contain __APP__/__BRANCH__ placeholders, so we sed them
+          # to dummy values before linting. Otherwise shellcheck flags
+          # __APP__ as an unset variable.
+          for tpl in deploy/*.sh.template; do
+            tmp=$(mktemp)
+            sed -e 's/__APP__/dummy/g' \
+                -e 's/__BRANCH__/main/g' \
+                -e 's/__SERVICE__/dummy.service/g' \
+                "$tpl" > "$tmp"
+            shellcheck -S warning "$tmp" || exit 1
+            rm "$tmp"
+          done

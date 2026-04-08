@@ -1,8 +1,9 @@
 """Shared utilities used by multiple piquano-core modules."""
+
 from __future__ import annotations
 
 import ipaddress
-from typing import Iterable
+from collections.abc import Iterable
 
 from django.db import models
 

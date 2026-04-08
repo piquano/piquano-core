@@ -16,11 +16,12 @@ Plus three DSGVO helpers any user-data export/erasure flow needs:
 To use, add ``"piquano_core.audit"`` to ``INSTALLED_APPS`` and run migrations
 in the consuming app.
 """
+
 from __future__ import annotations
 
 import hashlib
 import logging
-from typing import Iterable, Iterator
+from collections.abc import Iterable, Iterator
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -56,9 +57,7 @@ class AuditLog(models.Model):
     timestamp = models.DateTimeField(default=timezone.now, db_index=True)
 
     # Generic FK to the affected object (optional).
-    content_type = models.ForeignKey(
-        ContentType, on_delete=models.SET_NULL, null=True, blank=True
-    )
+    content_type = models.ForeignKey(ContentType, on_delete=models.SET_NULL, null=True, blank=True)
     object_id = models.PositiveIntegerField(null=True, blank=True)
     target = GenericForeignKey("content_type", "object_id")
 
@@ -93,7 +92,7 @@ class AuditLog(models.Model):
         payload: dict | None = None,
         request=None,
         summary: str = "",
-    ) -> "AuditLog":
+    ) -> AuditLog:
         """Convenience constructor that pulls IP/UA from a request if given."""
         kwargs: dict = {
             "action": action,

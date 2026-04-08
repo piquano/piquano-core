@@ -1,6 +1,14 @@
 #!/bin/bash
 # Deploy script for PIQUANO __APP__
-# Replace __APP__ with the actual app name (e.g. ats, ticket, lms).
+#
+# Replace placeholders before use:
+#   __APP__    — app name (e.g. ats, ticket, lms, crm, contentapp)
+#   __BRANCH__ — git branch to pull. Convention:
+#                  staging  → main
+#                  prod     → prod
+#   __SERVICE__ — systemd service unit (e.g. crm.service, crm-staging.service)
+#
+# See BRANCHING.md in piquano-core for the full branch model.
 #
 # Usage: ./deploy.sh
 # Place this file at /opt/__APP__/deploy.sh and chmod +x.
@@ -8,8 +16,9 @@
 set -euo pipefail
 
 APP=__APP__
+BRANCH=__BRANCH__
 APP_DIR=/opt/$APP
-SERVICE=$APP.service
+SERVICE=__SERVICE__
 
 echo "🚀 $APP-Deployment gestartet..."
 
@@ -23,8 +32,10 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
     exit 1
 fi
 
-echo "📥 Code von GitHub holen..."
-git pull --ff-only origin main
+echo "📥 Code von GitHub holen ($BRANCH)..."
+git fetch --quiet origin "$BRANCH"
+git checkout --quiet "$BRANCH"
+git merge --ff-only "origin/$BRANCH"
 
 echo "🗄️  Datenbank-Migrationen prüfen..."
 # Exit code 0 = nothing to do, 1 = pending migrations, ≥2 = real error.

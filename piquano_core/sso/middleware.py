@@ -16,6 +16,7 @@ Note: ``request.user`` is set directly without ``django.contrib.auth.login()``
 because Authelia is the session of record. If you switch to a hybrid model,
 populate ``user.backend`` and call ``auth.login()``.
 """
+
 from __future__ import annotations
 
 import logging
@@ -49,7 +50,7 @@ class AutheliaProfile:
         return parts[1] if len(parts) > 1 else ""
 
     @classmethod
-    def from_request(cls, request) -> "AutheliaProfile | None":
+    def from_request(cls, request) -> AutheliaProfile | None:
         username = request.META.get("HTTP_REMOTE_USER", "").strip()
         if not username:
             return None
@@ -157,11 +158,7 @@ class AutheliaRemoteUserMiddleware:
             update_fields.append("is_staff")
 
         role = self.get_role_for_groups(profile.groups)
-        if (
-            role is not None
-            and hasattr(user, "role")
-            and getattr(user, "role", None) != role
-        ):
+        if role is not None and hasattr(user, "role") and getattr(user, "role", None) != role:
             user.role = role
             update_fields.append("role")
 
