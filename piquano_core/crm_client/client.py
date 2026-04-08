@@ -2,31 +2,34 @@
 CRM API client.
 
 Wraps the internal CRM REST endpoints behind a small Python class so
-downstream apps (ATS, Ticket, LMS) don't reimplement HTTP plumbing,
-auth headers, or retry logic.
+downstream apps (ATS, Ticket, LMS, the new piquano-app) don't reimplement
+HTTP plumbing, auth headers, or retry logic.
 
-The high-level methods below are stubs — the CRM API surface is being
-hardened in Phase 0.C of the platform-extension plan. Method bodies stay
-minimal until the endpoints exist; the *interface* is what consumers
-should code against.
+Endpoints implemented as of v0.2.0:
+
+* ``get_user(username)`` — Phase 0.J.7 user-detail endpoint
+* ``list_users(...)`` — paginated user list
+* Stubs for contact/company endpoints (still WIP, see Phase 0.C)
 
 Settings (read by :meth:`from_settings`):
 
-* ``PIQUANO_CRM_BASE_URL`` — e.g. ``https://crm.piquano.com``
-* ``PIQUANO_CRM_API_TOKEN`` — bearer token issued by the CRM
-* ``PIQUANO_CRM_TIMEOUT`` — request timeout in seconds (default 10)
+* ``PIQUANO_CRM_BASE_URL``    — e.g. ``https://crm.piquano.com``
+* ``PIQUANO_CRM_API_TOKEN``   — bearer token issued by the CRM
+* ``PIQUANO_CRM_TIMEOUT``     — request timeout in seconds (default 10)
+* ``PIQUANO_CRM_CACHE_TTL``   — read-cache TTL in seconds (default 60)
 
 Usage::
 
     from piquano_core.crm_client import CRMClient
     crm = CRMClient.from_settings()  # cached singleton
-    contact = crm.get_contact(42)
+    user = crm.get_user("alice")     # cached for ``cache_ttl`` seconds
 """
 
 from __future__ import annotations
 
 import functools
 import logging
+import time
 from typing import Any
 from urllib.parse import urljoin
 
@@ -37,6 +40,7 @@ from urllib3.util.retry import Retry
 logger = logging.getLogger(__name__)
 
 DEFAULT_TIMEOUT = 10
+DEFAULT_CACHE_TTL = 60
 RETRY_STATUSES = (502, 503, 504)
 
 
@@ -44,24 +48,67 @@ class CRMClientError(Exception):
     """Raised when a CRM API call fails."""
 
 
+class CRMClientNotFound(CRMClientError):
+    """Raised when a CRM lookup returns 404."""
+
+
+class _TTLCache:
+    """Tiny in-process TTL cache used by CRMClient.
+
+    Not thread-safe in the strict sense — Python dict ops are atomic enough
+    for the per-request access pattern in Django views, and stale reads
+    during a race are acceptable for user-profile data.
+    """
+
+    def __init__(self, ttl: int):
+        self.ttl = ttl
+        self._store: dict[str, tuple[float, Any]] = {}
+
+    def get(self, key: str) -> Any | None:
+        entry = self._store.get(key)
+        if entry is None:
+            return None
+        expires_at, value = entry
+        if time.monotonic() >= expires_at:
+            self._store.pop(key, None)
+            return None
+        return value
+
+    def set(self, key: str, value: Any) -> None:
+        self._store[key] = (time.monotonic() + self.ttl, value)
+
+    def invalidate(self, key: str) -> None:
+        self._store.pop(key, None)
+
+    def clear(self) -> None:
+        self._store.clear()
+
+
 class CRMClient:
     """Thin REST client for the internal CRM API."""
 
-    def __init__(self, base_url: str, api_token: str, timeout: int = DEFAULT_TIMEOUT):
+    def __init__(
+        self,
+        base_url: str,
+        api_token: str,
+        timeout: int = DEFAULT_TIMEOUT,
+        cache_ttl: int = DEFAULT_CACHE_TTL,
+    ):
         # Trailing slash matters for urljoin: "https://x/api" + "contacts/" -> "https://x/contacts/"
         # whereas "https://x/api/" + "contacts/" -> "https://x/api/contacts/".
         self.base_url = base_url.rstrip("/") + "/"
         self.api_token = api_token
         self.timeout = timeout
         self._session = self._build_session()
+        self._cache = _TTLCache(cache_ttl) if cache_ttl > 0 else None
 
     def _build_session(self) -> requests.Session:
         session = requests.Session()
         session.headers.update(
             {
-                "Authorization": f"Bearer {self.api_token}",
+                "Authorization": f"Token {self.api_token}",
                 "Accept": "application/json",
-                "User-Agent": "piquano-core/0.1.0",
+                "User-Agent": "piquano-core/0.2.0",
             }
         )
         retry = Retry(
@@ -86,9 +133,15 @@ class CRMClient:
         base_url = getattr(settings, "PIQUANO_CRM_BASE_URL", "")
         token = getattr(settings, "PIQUANO_CRM_API_TOKEN", "")
         timeout = getattr(settings, "PIQUANO_CRM_TIMEOUT", DEFAULT_TIMEOUT)
+        cache_ttl = getattr(settings, "PIQUANO_CRM_CACHE_TTL", DEFAULT_CACHE_TTL)
         if not base_url or not token:
             raise CRMClientError("PIQUANO_CRM_BASE_URL and PIQUANO_CRM_API_TOKEN must be set")
-        return cls(base_url=base_url, api_token=token, timeout=timeout)
+        return cls(
+            base_url=base_url,
+            api_token=token,
+            timeout=timeout,
+            cache_ttl=cache_ttl,
+        )
 
     # ----- low-level ----------------------------------------------------------
 
@@ -99,7 +152,13 @@ class CRMClient:
         *,
         params: dict | None = None,
         json: dict | None = None,
+        cache_key: str | None = None,
     ) -> Any:
+        if method == "GET" and self._cache is not None and cache_key is not None:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         url = urljoin(self.base_url, path.lstrip("/"))
         try:
             resp = self._session.request(
@@ -109,29 +168,68 @@ class CRMClient:
             logger.warning("CRM API %s %s failed: %s", method, path, exc)
             raise CRMClientError(str(exc)) from exc
 
+        if resp.status_code == 404:
+            logger.info("CRM API %s %s -> 404", method, path)
+            raise CRMClientNotFound(f"Not found: {method} {path}")
+
         if resp.status_code >= 400:
             # Don't log the body — CRM responses can contain contact PII.
             logger.warning("CRM API %s %s -> %s", method, path, resp.status_code)
             raise CRMClientError(f"HTTP {resp.status_code} on {method} {path}")
 
-        if resp.status_code == 204 or not resp.content:
-            return None
-        return resp.json()
+        data = None if resp.status_code == 204 or not resp.content else resp.json()
 
-    # ----- high-level (stubs) -------------------------------------------------
+        if (
+            method == "GET"
+            and self._cache is not None
+            and cache_key is not None
+            and data is not None
+        ):
+            self._cache.set(cache_key, data)
+
+        return data
+
+    def invalidate_cache(self, key: str | None = None) -> None:
+        """Invalidate one cached entry or the whole cache."""
+        if self._cache is None:
+            return
+        if key is None:
+            self._cache.clear()
+        else:
+            self._cache.invalidate(key)
+
+    # ----- users (Phase 0.J.7) ------------------------------------------------
+
+    def get_user(self, username: str) -> dict:
+        """Fetch a single user by username. Raises :class:`CRMClientNotFound`."""
+        username = username.strip()
+        if not username:
+            raise CRMClientError("username must be non-empty")
+        return self._request(
+            "GET",
+            f"api/users/{username}/",
+            cache_key=f"user:{username}",
+        )
+
+    def list_users(self, q: str | None = None, limit: int = 50) -> list[dict]:
+        """Search/list users. Returns the ``results`` array of a paginated response."""
+        params: dict[str, Any] = {"page_size": limit}
+        if q:
+            params["search"] = q
+        data = self._request("GET", "api/users/", params=params)
+        if not isinstance(data, dict) or "results" not in data:
+            raise CRMClientError("unexpected response shape from /api/users/")
+        return data["results"]
+
+    # ----- contacts (stubs — Phase 0.C will harden these) ---------------------
 
     def get_contact(self, contact_id: int) -> dict:
         """Fetch a single contact by ID."""
         return self._request("GET", f"api/contacts/{contact_id}/")
 
     def search_contacts(self, query: str, limit: int = 20) -> list[dict]:
-        """Search contacts by name, email, or company.
-
-        Expects a paginated DRF response (``{"results": [...]}``). Raises
-        :class:`CRMClientError` if the response shape is unexpected — silent
-        fall-throughs hide API contract drift.
-        """
-        data = self._request("GET", "api/contacts/", params={"q": query, "limit": limit})
+        """Search contacts by name, email, or company."""
+        data = self._request("GET", "api/contacts/", params={"search": query, "page_size": limit})
         if not isinstance(data, dict) or "results" not in data:
             raise CRMClientError("unexpected response shape from /api/contacts/")
         return data["results"]
@@ -146,7 +244,7 @@ class CRMClient:
     def health(self) -> bool:
         """Lightweight liveness probe."""
         try:
-            self._request("GET", "api/health/")
+            self._request("GET", "api/users/", params={"page_size": 1})
             return True
         except CRMClientError:
             return False

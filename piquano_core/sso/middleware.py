@@ -97,14 +97,45 @@ class AutheliaRemoteUserMiddleware:
     def is_admin(self, groups: frozenset[str]) -> bool:
         return self.admin_group in groups
 
+    def enrich_from_crm(self, user, profile: AutheliaProfile) -> None:
+        """Optional hook to hydrate user fields from the CRM API.
+
+        Default no-op. Apps that want CRM-master semantics (Phase 0.J/0.K
+        Pull-Architektur) override this and call ``CRMClient.get_user(...)``
+        to fetch the canonical profile, then copy fields onto ``user``::
+
+            from piquano_core.crm_client import CRMClient, CRMClientNotFound
+
+            class MyMiddleware(AutheliaRemoteUserMiddleware):
+                def enrich_from_crm(self, user, profile):
+                    try:
+                        data = CRMClient.from_settings().get_user(profile.username)
+                    except CRMClientNotFound:
+                        return  # CRM doesn't know this user — keep Authelia data
+                    user.first_name = data.get("first_name", user.first_name)
+                    user.last_name = data.get("last_name", user.last_name)
+                    user.phone = data.get("phone", "")
+                    user.avatar_url = data.get("avatar_url", "")
+
+        The hook runs at the END of authentication (after create or sync).
+        Saving the user is the override's responsibility — call
+        ``user.save(update_fields=[...])`` if you persist changes. The
+        client cache (``PIQUANO_CRM_CACHE_TTL``) bounds CRM round-trips.
+        """
+        return None
+
     # ----- internals ----------------------------------------------------------
 
     def _authenticate(self, profile: AutheliaProfile):
         try:
             user = self.User.objects.get(username=profile.username)
         except self.User.DoesNotExist:
-            return self._create_user(profile)
+            user = self._create_user(profile)
+            if user is not None:
+                self.enrich_from_crm(user, profile)
+            return user
         if user.is_active or self._sync_user_data(user, profile):
+            self.enrich_from_crm(user, profile)
             return user
         return None
 
