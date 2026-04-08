@@ -1,0 +1,162 @@
+/*
+ * PIQUANO Design System — base.css
+ *
+ * Shared color palette, spacing, and utility classes for all internal apps.
+ * Apps may extend this with their own stylesheet but should not override
+ * the CSS variables defined under :root.
+ */
+
+:root {
+  /* Brand colors (from CRM/Content-Hub) */
+  --piquano-primary:        #328cc1;
+  --piquano-primary-dark:   #267094;
+  --piquano-primary-light:  #5fa9d4;
+  --piquano-sidebar:        #133447;
+  --piquano-sidebar-text:   #e8eef3;
+  --piquano-accent:         #f5a623;
+
+  /* Neutrals */
+  --piquano-bg:             #f7f9fc;
+  --piquano-surface:        #ffffff;
+  --piquano-border:         #dfe5ec;
+  --piquano-text:           #1f2a37;
+  --piquano-text-muted:     #6b7785;
+
+  /* Status */
+  --piquano-success:        #1f9d55;
+  --piquano-warning:        #d97706;
+  --piquano-danger:         #d92d20;
+  --piquano-info:           #0284c7;
+
+  /* Spacing scale */
+  --piquano-space-1: 0.25rem;
+  --piquano-space-2: 0.5rem;
+  --piquano-space-3: 0.75rem;
+  --piquano-space-4: 1rem;
+  --piquano-space-5: 1.5rem;
+  --piquano-space-6: 2rem;
+  --piquano-space-8: 3rem;
+
+  /* Radius */
+  --piquano-radius-sm: 4px;
+  --piquano-radius-md: 8px;
+  --piquano-radius-lg: 12px;
+
+  /* Typography */
+  --piquano-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                       "Helvetica Neue", Arial, sans-serif;
+  --piquano-font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
+  --piquano-fs-sm: 0.875rem;
+  --piquano-fs-md: 1rem;
+  --piquano-fs-lg: 1.125rem;
+  --piquano-fs-xl: 1.5rem;
+
+  /* Shadows */
+  --piquano-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --piquano-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--piquano-font-sans);
+  font-size: var(--piquano-fs-md);
+  color: var(--piquano-text);
+  background: var(--piquano-bg);
+  line-height: 1.5;
+}
+
+a {
+  color: var(--piquano-primary);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+/* Button base */
+.pq-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--piquano-space-2);
+  padding: var(--piquano-space-2) var(--piquano-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--piquano-radius-sm);
+  background: var(--piquano-primary);
+  color: #fff;
+  font-size: var(--piquano-fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.pq-btn:hover { background: var(--piquano-primary-dark); }
+.pq-btn--secondary {
+  background: var(--piquano-surface);
+  color: var(--piquano-text);
+  border-color: var(--piquano-border);
+}
+.pq-btn--secondary:hover { background: var(--piquano-bg); }
+.pq-btn--danger { background: var(--piquano-danger); }
+
+/* Card */
+.pq-card {
+  background: var(--piquano-surface);
+  border: 1px solid var(--piquano-border);
+  border-radius: var(--piquano-radius-md);
+  padding: var(--piquano-space-5);
+  box-shadow: var(--piquano-shadow-sm);
+}
+
+/* Sidebar shell */
+.pq-sidebar {
+  background: var(--piquano-sidebar);
+  color: var(--piquano-sidebar-text);
+  width: 240px;
+  min-height: 100vh;
+  padding: var(--piquano-space-5) 0;
+}
+.pq-sidebar a {
+  display: block;
+  padding: var(--piquano-space-3) var(--piquano-space-5);
+  color: var(--piquano-sidebar-text);
+}
+.pq-sidebar a:hover,
+.pq-sidebar a.active {
+  background: rgba(255, 255, 255, 0.08);
+  text-decoration: none;
+}
+
+/* Form fields */
+.pq-input,
+.pq-select,
+.pq-textarea {
+  width: 100%;
+  padding: var(--piquano-space-2) var(--piquano-space-3);
+  border: 1px solid var(--piquano-border);
+  border-radius: var(--piquano-radius-sm);
+  font-size: var(--piquano-fs-sm);
+  font-family: inherit;
+  background: var(--piquano-surface);
+}
+.pq-input:focus,
+.pq-select:focus,
+.pq-textarea:focus {
+  outline: none;
+  border-color: var(--piquano-primary);
+  box-shadow: 0 0 0 2px rgba(50, 140, 193, 0.15);
+}
+
+/* Status pills */
+.pq-pill {
+  display: inline-block;
+  padding: var(--piquano-space-1) var(--piquano-space-3);
+  border-radius: 999px;
+  font-size: var(--piquano-fs-sm);
+  background: var(--piquano-bg);
+  color: var(--piquano-text-muted);
+}
+.pq-pill--success { background: #e6f4ea; color: var(--piquano-success); }
+.pq-pill--warning { background: #fef3c7; color: var(--piquano-warning); }
+.pq-pill--danger  { background: #fee4e2; color: var(--piquano-danger); }
+.pq-pill--info    { background: #e0f2fe; color: var(--piquano-info); }

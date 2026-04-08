@@ -1,0 +1,57 @@
+#!/bin/bash
+# Daily Postgres backup for PIQUANO __APP__
+# Replace __APP__ with the actual app name (e.g. ats, ticket, lms).
+#
+# Run via cron, e.g.:
+#   30 2 * * * /opt/__APP__/backup.sh
+#
+# Backups land in /var/backups/__APP__/ (NOT inside the repo directory).
+# Retains the last 14 daily dumps + the last 8 weekly dumps (Sundays).
+#
+# Requires a sudoers entry: usunkel ALL=(postgres) NOPASSWD: /usr/bin/pg_dump
+
+set -euo pipefail
+
+APP=__APP__
+DB=piquano_$APP
+BACKUP_ROOT=/var/backups/$APP
+DAILY=$BACKUP_ROOT/daily
+WEEKLY=$BACKUP_ROOT/weekly
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+DOW=$(date +%u)  # 1=Mon … 7=Sun
+
+mkdir -p "$DAILY" "$WEEKLY"
+
+DAILY_FILE="$DAILY/${APP}-${TIMESTAMP}.sql.gz"
+TMP_FILE="${DAILY_FILE}.tmp"
+
+cleanup() {
+    rm -f "$TMP_FILE"
+}
+trap cleanup EXIT
+
+echo "📦 PG-Dump → $DAILY_FILE"
+sudo -u postgres pg_dump -Fp "$DB" | gzip > "$TMP_FILE"
+
+# Sanity-check the dump before swapping it in. With pipefail set above, a
+# pg_dump failure already causes the pipeline to exit non-zero, but the
+# size check guards against truncated files too.
+if [ ! -s "$TMP_FILE" ]; then
+    echo "❌ Backup is empty — pg_dump or gzip failed silently."
+    exit 1
+fi
+
+mv "$TMP_FILE" "$DAILY_FILE"
+trap - EXIT
+
+# Sunday → also copy to weekly/
+if [ "$DOW" = "7" ]; then
+    cp "$DAILY_FILE" "$WEEKLY/${APP}-week-$(date +%G-W%V).sql.gz"
+fi
+
+# Retention: 14 daily, 8 weekly (mtime-based; only safe to run after a
+# successful new backup landed above).
+find "$DAILY"  -name "${APP}-*.sql.gz" -type f -mtime +14 -delete
+find "$WEEKLY" -name "${APP}-week-*.sql.gz" -type f -mtime +56 -delete
+
+echo "✅ Backup ${APP} fertig: $(du -h "$DAILY_FILE" | cut -f1)"

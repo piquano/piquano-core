@@ -1,0 +1,59 @@
+#!/bin/bash
+# Deploy script for PIQUANO __APP__
+# Replace __APP__ with the actual app name (e.g. ats, ticket, lms).
+#
+# Usage: ./deploy.sh
+# Place this file at /opt/__APP__/deploy.sh and chmod +x.
+
+set -euo pipefail
+
+APP=__APP__
+APP_DIR=/opt/$APP
+SERVICE=$APP.service
+
+echo "🚀 $APP-Deployment gestartet..."
+
+cd "$APP_DIR"
+
+# Refuse to deploy if the working tree has local changes — protects against
+# clobbering an in-progress hot-fix or accidentally-edited .env.
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    echo "❌ Working tree is dirty. Commit or stash before deploying:"
+    git status --short
+    exit 1
+fi
+
+echo "📥 Code von GitHub holen..."
+git pull --ff-only origin main
+
+echo "🗄️  Datenbank-Migrationen prüfen..."
+# Exit code 0 = nothing to do, 1 = pending migrations, ≥2 = real error.
+set +e
+venv/bin/python manage.py migrate --check
+RC=$?
+set -e
+case $RC in
+    0) echo "   Keine neuen Migrationen." ;;
+    1) echo "   Neue Migrationen werden angewendet..."
+       venv/bin/python manage.py migrate ;;
+    *) echo "❌ migrate --check schlug fehl (Exit $RC)"; exit $RC ;;
+esac
+
+echo "📦 Static Files sammeln..."
+venv/bin/python manage.py collectstatic --noinput
+
+echo "🔄 Service neu starten..."
+sudo systemctl restart "$SERVICE"
+
+# Wait up to 10s for the unit to come up.
+for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if [ "$(systemctl is-active "$SERVICE")" = "active" ]; then
+        echo "✅ $APP läuft. Deployment erfolgreich."
+        exit 0
+    fi
+    sleep 1
+done
+
+echo "❌ Service ist nicht aktiv nach 10s."
+journalctl -u "$SERVICE" -n 30 --no-pager
+exit 1

@@ -1,0 +1,33 @@
+[Unit]
+Description=PIQUANO __APP__ (Django/Gunicorn)
+After=network.target postgresql.service
+
+[Service]
+User=usunkel
+Group=usunkel
+WorkingDirectory=/opt/__APP__
+Environment="PATH=/opt/__APP__/venv/bin"
+EnvironmentFile=-/opt/__APP__/.env
+ExecStart=/opt/__APP__/venv/bin/gunicorn config.wsgi:application \
+    --bind 127.0.0.1:__PORT__ \
+    --workers 3 \
+    --timeout 120 \
+    --access-logfile /opt/__APP__/logs/gunicorn-access.log \
+    --error-logfile /opt/__APP__/logs/gunicorn-error.log
+Restart=always
+RestartSec=3
+
+# Hardening — restrict what the gunicorn process can touch.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+ReadWritePaths=/opt/__APP__/logs /opt/__APP__/media /opt/__APP__/staticfiles
+
+[Install]
+WantedBy=multi-user.target
