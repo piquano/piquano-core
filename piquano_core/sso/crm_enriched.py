@@ -117,6 +117,4 @@ class AutheliaCRMRemoteUserMiddleware(AutheliaRemoteUserMiddleware):
 
         if update_fields:
             user.save(update_fields=update_fields)
-            logger.debug(
-                "CRM-enriched %s: %s", profile.username, ", ".join(update_fields)
-            )
+            logger.debug("CRM-enriched %s: %s", profile.username, ", ".join(update_fields))
