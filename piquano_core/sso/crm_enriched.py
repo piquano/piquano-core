@@ -35,10 +35,21 @@ Conditional fields synced ONLY if the local user model has them
 * ``phone``
 * ``avatar_url``
 
-Roles, teams, ``is_active``, ``is_staff``, and any other privileged
-attributes are deliberately NOT synced here — they belong to either the
-auth layer (Authelia groups → ``is_staff``, handled by the parent) or
-the per-app authorization model.
+Authorization fields (ab 0.5.0):
+
+* ``is_staff`` — wird aus der CRM-Antwort übernommen, sodass die
+  Admin-Berechtigung zentral im CRM gepflegt werden kann. Gate per
+  Setting ``PIQUANO_CRM_SYNC_IS_STAFF`` (default ``True``).
+* ``is_active`` — analog, sodass ein Deaktivierungsbeschluss im CRM
+  sich sofort auf die App auswirkt.
+
+Die is_staff-/is_active-Synchronisation läuft NACH der Authelia-basierten
+Logik des Parents — CRM ist Master, Authelia ist Fallback. Wenn der CRM
+keinen Datensatz zum User hat (CRMClientNotFound), bleibt alles was der
+Parent gesetzt hat unverändert.
+
+Roles, teams und andere Struktur-Daten werden weiterhin NICHT synced —
+die gehören in das per-app Authorization-Modell.
 """
 
 from __future__ import annotations
@@ -58,6 +69,11 @@ _STANDARD_FIELDS = ("first_name", "last_name", "email")
 # usable with the stock Django User.
 _OPTIONAL_FIELDS = ("phone", "avatar_url")
 
+# Authorization fields. Always present on AbstractUser but behind a
+# setting-gate so apps can opt out (e.g. legacy apps where Authelia
+# groups are the source of truth).
+_AUTHZ_FIELDS = ("is_staff", "is_active")
+
 
 class AutheliaCRMRemoteUserMiddleware(AutheliaRemoteUserMiddleware):
     """Authelia middleware that hydrates the user from the CRM API.
@@ -71,6 +87,8 @@ class AutheliaCRMRemoteUserMiddleware(AutheliaRemoteUserMiddleware):
         # Late imports keep piquano_core.sso importable in test contexts
         # that don't configure the CRM client (e.g. unit tests for the
         # parent middleware).
+        from django.conf import settings
+
         from piquano_core.crm_client import CRMClient, CRMClientError, CRMClientNotFound
 
         try:
@@ -114,6 +132,22 @@ class AutheliaCRMRemoteUserMiddleware(AutheliaRemoteUserMiddleware):
             if getattr(user, field) != new_value:
                 setattr(user, field, new_value)
                 update_fields.append(field)
+
+        # ----- authorization fields (is_staff, is_active) ------------------
+        # CRM is master for per-user admin-flags. If the app opts out via
+        # PIQUANO_CRM_SYNC_IS_STAFF=False, fall back to the Authelia-based
+        # logic of the parent middleware.
+        if getattr(settings, "PIQUANO_CRM_SYNC_IS_STAFF", True):
+            for field in _AUTHZ_FIELDS:
+                new_value = data.get(field)
+                if new_value is None:
+                    continue
+                # is_staff/is_active are bool — use an identity-aware compare
+                # so 0/1 and False/True aren't treated as different.
+                new_bool = bool(new_value)
+                if getattr(user, field) != new_bool:
+                    setattr(user, field, new_bool)
+                    update_fields.append(field)
 
         if update_fields:
             user.save(update_fields=update_fields)
