@@ -108,7 +108,7 @@ class CRMClient:
             {
                 "Authorization": f"Token {self.api_token}",
                 "Accept": "application/json",
-                "User-Agent": "piquano-core/0.3.0",
+                "User-Agent": "piquano-core/0.6.0",
             }
         )
         retry = Retry(
@@ -117,6 +117,8 @@ class CRMClient:
             read=2,
             backoff_factor=0.3,
             status_forcelist=RETRY_STATUSES,
+            # POST wird nicht retried — Timeline-Push ist best-effort,
+            # Retry würde bei transienten 5xx Duplikate erzeugen.
             allowed_methods=frozenset(["GET", "HEAD"]),
         )
         adapter = HTTPAdapter(max_retries=retry, pool_connections=4, pool_maxsize=8)
@@ -248,3 +250,69 @@ class CRMClient:
             return True
         except CRMClientError:
             return False
+
+    # ----- timeline events (v0.6.0) -------------------------------------------
+
+    def post_event(
+        self,
+        *,
+        source_app: str,
+        actor_username: str,
+        verb: str,
+        target_type: str = "",
+        target_id: str = "",
+        target_label: str = "",
+        target_url: str = "",
+        summary: str = "",
+        extra: dict | None = None,
+        occurred_at: str | None = None,
+    ) -> dict | None:
+        """Push einen Cross-App-Event an die CRM-Timeline.
+
+        **Fire-and-forget**: alle Fehler werden gefangen und als Warning
+        geloggt. Niemals raisen — der Caller soll durch einen CRM-Ausfall
+        nicht blockiert oder ausgebremst werden.
+
+        Gibt die Antwort des CRM zurück (dict) wenn erfolgreich, sonst None.
+
+        Args:
+            source_app: Name der Origin-App (``piquano-app``, ``ats``, …)
+            actor_username: Authelia-Username des Users der die Aktion
+                ausgeführt hat
+            verb: eins der :class:`TimelineVerb`-Labels (create, update,
+                publish, notify, sync, generate, delete, unpublish)
+            target_type: Model-Name im Origin-System (``casestudy``, …)
+            target_id: Primary Key des Targets als String
+            target_label: Menschenlesbare Beschriftung
+            target_url: Deep-Link zurück ins Origin-System
+            summary: kurzer Human-Readable-Text
+            extra: dict mit zusätzlichen strukturierten Daten
+            occurred_at: ISO-8601 Zeitstempel wann die Aktion passiert ist;
+                wenn None wird der aktuelle Zeitpunkt benutzt
+        """
+        from datetime import datetime, timezone
+
+        payload = {
+            "source_app": source_app,
+            "actor_username": actor_username or "",
+            "verb": verb,
+            "target_type": target_type or "",
+            "target_id": str(target_id) if target_id else "",
+            "target_label": (target_label or "")[:500],
+            "target_url": target_url or "",
+            "summary": (summary or "")[:500],
+            "extra": extra or {},
+            "occurred_at": occurred_at or datetime.now(timezone.utc).isoformat(),
+        }
+
+        try:
+            return self._request("POST", "api/timeline/events/", json=payload)
+        except CRMClientError as exc:
+            logger.warning(
+                "post_event fire-and-forget failed (verb=%s target=%s/%s): %s",
+                verb,
+                target_type,
+                target_id,
+                exc,
+            )
+            return None
