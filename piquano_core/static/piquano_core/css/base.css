@@ -7,20 +7,27 @@
  */
 
 :root {
-  /* Brand colors (from CRM/Content-Hub) */
-  --piquano-primary:        #328cc1;
-  --piquano-primary-dark:   #267094;
-  --piquano-primary-light:  #5fa9d4;
+  /* Brand colors — corrected 2026-04-09 per Uwe:
+   *   --piquano-primary = #133447 (Navy, für Text/Hervorhebungen/Sidebar)
+   *   --piquano-button  = #328cc1 (Action-Blau, NUR für Buttons/CTAs) */
+  --piquano-primary:        #133447;
+  --piquano-primary-dark:   #0a1f2a;
+  --piquano-primary-light:  #2e5870;
+  --piquano-primary-50:     #e7ecef;   /* very light tint for hover/bg */
   --piquano-sidebar:        #133447;
   --piquano-sidebar-text:   #e8eef3;
   --piquano-accent:         #f5a623;
+
+  /* Action / Button colors (separate from primary brand) */
+  --piquano-button:         #328cc1;
+  --piquano-button-dark:    #267094;
 
   /* Neutrals */
   --piquano-bg:             #f7f9fc;
   --piquano-surface:        #ffffff;
   --piquano-border:         #dfe5ec;
   --piquano-text:           #1f2a37;
-  --piquano-text-muted:     #6b7785;
+  --piquano-text-muted:     #586574;   /* 5.3:1 on #fff, up from 4.6:1 */
 
   /* Status */
   --piquano-success:        #1f9d55;
@@ -43,8 +50,8 @@
   --piquano-radius-lg: 12px;
 
   /* Typography */
-  --piquano-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                       "Helvetica Neue", Arial, sans-serif;
+  --piquano-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+                       Roboto, "Helvetica Neue", Arial, sans-serif;
   --piquano-font-mono: "SFMono-Regular", Menlo, Monaco, Consolas, monospace;
   --piquano-fs-sm: 0.875rem;
   --piquano-fs-md: 1rem;
@@ -70,12 +77,12 @@ body {
 }
 
 a {
-  color: var(--piquano-primary);
+  color: var(--piquano-button);
   text-decoration: none;
 }
 a:hover { text-decoration: underline; }
 
-/* Button base */
+/* Button base — always uses the action-blue (#328cc1), NOT the brand navy. */
 .pq-btn {
   display: inline-flex;
   align-items: center;
@@ -83,14 +90,14 @@ a:hover { text-decoration: underline; }
   padding: var(--piquano-space-2) var(--piquano-space-4);
   border: 1px solid transparent;
   border-radius: var(--piquano-radius-sm);
-  background: var(--piquano-primary);
+  background: var(--piquano-button);
   color: #fff;
   font-size: var(--piquano-fs-sm);
   font-weight: 500;
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.pq-btn:hover { background: var(--piquano-primary-dark); }
+.pq-btn:hover { background: var(--piquano-button-dark); }
 .pq-btn--secondary {
   background: var(--piquano-surface);
   color: var(--piquano-text);
@@ -143,8 +150,8 @@ a:hover { text-decoration: underline; }
 .pq-select:focus,
 .pq-textarea:focus {
   outline: none;
-  border-color: var(--piquano-primary);
-  box-shadow: 0 0 0 2px rgba(50, 140, 193, 0.15);
+  border-color: var(--piquano-button);
+  box-shadow: 0 0 0 3px rgba(50, 140, 193, 0.2);
 }
 
 /* Status pills */
