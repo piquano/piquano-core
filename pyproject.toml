@@ -28,7 +28,7 @@ include-package-data = true
 include = ["piquano_core*"]
 
 [tool.setuptools.package-data]
-piquano_core = ["static/piquano_core/css/*.css"]
+piquano_core = ["static/piquano_core/css/*.css", "templates/piquano_core/*.html"]
 
 [tool.ruff]
 target-version = "py310"

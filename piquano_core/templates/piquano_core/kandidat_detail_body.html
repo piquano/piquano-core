@@ -1,0 +1,303 @@
+{# Shared Kandidaten-Detail Body — used by ATS + CRM.
+   Required context variables:
+     k              — Kandidat/Contact object
+     k_list_url     — URL zur Kandidaten-Liste
+     k_edit_url     — URL zum Bearbeiten
+     k_mail_url     — URL zum E-Mail senden (optional)
+     k_note_url     — URL zum Notiz speichern (optional)
+     k_delete_url   — URL zur DSGVO-Löschung (optional)
+     k_documents    — QuerySet/Liste von Dokumenten (optional)
+     k_emails       — QuerySet/Liste von E-Mails (optional)
+     k_notes        — QuerySet/Liste von Notizen (optional)
+     k_applications — QuerySet von Bewerbungen (optional, ATS)
+     k_deals        — QuerySet von Deals (optional, CRM)
+     k_audit_logs   — QuerySet von Audit-Logs (optional)
+     k_consents     — QuerySet von Consents (optional, CRM)
+     k_consent_url  — URL für Consent-Update (optional, CRM)
+     k_gdpr_export_url — URL für DSGVO-Export (optional, CRM)
+     k_lock_url     — URL für DSGVO-Lock (optional, CRM)
+     k_app_name     — "ATS" oder "CRM"
+#}
+
+{# === Header === #}
+<div class="actions-bar">
+    <div class="actions-left">
+        <div>
+            <a href="{{ k_list_url }}" style="font-size:13px; color:var(--piquano-text-muted); text-decoration:none;">← Kandidaten</a>
+        </div>
+    </div>
+    <div class="actions-right">
+        {% if k_mail_url %}<a href="{{ k_mail_url }}" class="btn btn-primary">E-Mail senden</a>{% endif %}
+        <a href="{{ k_edit_url }}" class="btn btn-secondary">Bearbeiten</a>
+    </div>
+</div>
+
+{# === Two-Column Layout (1:1) === #}
+<div class="candidate-detail-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start;">
+
+    {# ====== LEFT: Wer ist das? ====== #}
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+        {# --- 1. Profil-Card --- #}
+        <div class="card">
+            <div class="card-body" style="display:flex; flex-direction:column; align-items:center; text-align:center; padding:32px 20px 24px;">
+                <div style="width:72px; height:72px; border-radius:50%; background:var(--piquano-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:700; margin-bottom:16px;">{{ k.first_name|first|upper }}{{ k.last_name|first|upper }}</div>
+                <h1 style="font-size:22px; font-weight:700; margin:0; color:var(--piquano-text);">{{ k.first_name }} {{ k.last_name }}</h1>
+                {% if k.position %}<p style="font-size:14px; color:var(--piquano-text-muted); margin:4px 0 0;">{{ k.position }}</p>{% endif %}
+                {% if k.company %}<p style="font-size:13px; color:var(--piquano-text-muted); margin:2px 0 0;">{{ k.company }}</p>{% endif %}
+                <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; justify-content:center;">
+                    <span class="badge badge-gray">{{ k.get_source_display }}</span>
+                    {% if k.is_locked %}<span class="badge badge-red">DSGVO-anonymisiert</span>
+                    {% elif k.marketing_consent %}<span class="badge badge-green">DSGVO OK</span>
+                    {% else %}<span class="badge badge-yellow">DSGVO offen</span>{% endif %}
+                </div>
+            </div>
+        </div>
+
+        {# --- 2. Kontakt --- #}
+        <div class="card">
+            <div class="card-header"><h2>Kontakt</h2></div>
+            <div class="card-body" style="padding:0;">
+                <dl class="detail-dl" style="margin:0; padding:0 20px;">
+                    {% if k.email %}<div><dt>E-Mail</dt><dd><a href="mailto:{{ k.email }}" style="color:var(--piquano-button); text-decoration:none;">{{ k.email }}</a></dd></div>{% endif %}
+                    {% if k.phone %}<div><dt>Telefon</dt><dd><a href="tel:{{ k.phone }}" style="color:var(--piquano-button); text-decoration:none;">{{ k.phone }}</a></dd></div>{% endif %}
+                    {% if k.linkedin_url %}<div><dt>LinkedIn</dt><dd><a href="{{ k.linkedin_url }}" target="_blank" rel="noopener" style="color:var(--piquano-button); text-decoration:none;">Profil ↗</a></dd></div>{% endif %}
+                    {% if k.xing_url %}<div><dt>XING</dt><dd><a href="{{ k.xing_url }}" target="_blank" rel="noopener" style="color:var(--piquano-button); text-decoration:none;">Profil ↗</a></dd></div>{% endif %}
+                </dl>
+            </div>
+        </div>
+
+        {# --- 3. Datenschutz --- #}
+        <details class="card" open>
+            <summary class="card-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <h2>Datenschutz</h2>
+                <span style="font-size:11px; color:var(--piquano-text-muted);">▾</span>
+            </summary>
+            <div class="card-body">
+                <h3 style="font-size:13px; font-weight:600; color:var(--piquano-text); margin:0 0 12px;">Einwilligungen</h3>
+                {% if k_consents %}
+                    {% for consent in k_consents %}
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--piquano-border);">
+                        <span style="font-size:13px;">{{ consent.get_consent_type_display }}</span>
+                        <span class="badge {% if consent.status == 'given' %}badge-green{% elif consent.status == 'revoked' %}badge-red{% else %}badge-gray{% endif %}">{{ consent.get_status_display }}</span>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div style="display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--piquano-border);">
+                        <span style="font-size:13px;">Marketing-Zustimmung</span>
+                        <span class="badge {% if k.marketing_consent %}badge-green{% else %}badge-yellow{% endif %}">{% if k.marketing_consent %}Erteilt{% else %}Offen{% endif %}</span>
+                    </div>
+                {% endif %}
+
+                {% if k_delete_url and not k.is_locked %}
+                <div style="margin-top:16px; padding-top:12px; border-top:1px solid var(--piquano-border);">
+                    <a href="{{ k_delete_url }}" class="btn btn-sm" style="width:100%; text-align:center; font-size:12px; background:var(--piquano-danger); color:#fff; border-color:var(--piquano-danger);">Anonymisieren (Art. 17) — unwiderruflich</a>
+                </div>
+                {% endif %}
+            </div>
+        </details>
+
+        {# --- 4. Dokumente --- #}
+        {% if k_documents %}
+        <div class="card">
+            <div class="card-header"><h2>Dokumente</h2></div>
+            <div class="card-body" style="padding:12px 20px;">
+                {% for doc in k_documents %}
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;{% if not forloop.last %} border-bottom:1px solid var(--piquano-border);{% endif %}">
+                    <div>
+                        <div style="font-size:14px; font-weight:500; color:var(--piquano-text);">{{ doc.title|default:"Lebenslauf" }}</div>
+                        <span class="badge badge-gray" style="font-size:10px; padding:1px 6px;">{{ doc.doc_type|default:"CV" }}</span>
+                    </div>
+                    <a href="{{ doc.url }}" target="_blank" class="btn btn-sm btn-secondary">Öffnen ↗</a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# --- 5. Datenherkunft --- #}
+        <details class="card">
+            <summary class="card-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+                <h2>Datenherkunft</h2>
+                <span style="font-size:11px; color:var(--piquano-text-muted);">▸</span>
+            </summary>
+            <div class="card-body" style="padding:0;">
+                <dl class="detail-dl" style="margin:0; padding:0 20px;">
+                    <div><dt>Quelle</dt><dd>{{ k.get_source_display }}</dd></div>
+                    <div><dt>Erstellt</dt><dd>{{ k.created_at|date:"d.m.Y H:i" }}</dd></div>
+                    <div><dt>Geändert</dt><dd>{{ k.updated_at|date:"d.m.Y H:i" }}</dd></div>
+                </dl>
+            </div>
+        </details>
+    </div>
+
+    {# ====== RIGHT: Was kann die Person? ====== #}
+    <div style="display:flex; flex-direction:column; gap:20px;">
+
+        {# --- 1. Profil --- #}
+        {% if k_funktionsbereiche or k.skills or k.tags.all %}
+        <div class="card">
+            <div class="card-header"><h2>Profil</h2></div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+                {% if k_funktionsbereiche %}<div><h3 class="detail-section-title">Funktionsbereiche</h3><p style="font-size:14px; color:var(--piquano-text); margin:0;">{{ k_funktionsbereiche }}</p></div>{% endif %}
+                {% if k.skills %}<div><h3 class="detail-section-title">Skills</h3><div class="tag-list">{% for skill in k.skills %}<span class="tag">{{ skill }}</span>{% endfor %}</div></div>{% endif %}
+                {% if k.tags.all %}<div><h3 class="detail-section-title">Tags</h3><div class="tag-list">{% for tag in k.tags.all %}<span class="tag">{{ tag.name }}</span>{% endfor %}</div></div>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# --- 2. Berufserfahrung --- #}
+        {% if k.custom_fields.experience %}
+        <div class="card">
+            <div class="card-header"><h2>Berufserfahrung</h2></div>
+            <div class="card-body" style="padding:12px 20px;">
+                {% for exp in k.custom_fields.experience %}
+                <div style="position:relative; padding:10px 0 10px 20px;{% if not forloop.last %} border-bottom:1px solid var(--piquano-border);{% endif %}">
+                    <div style="position:absolute; left:0; top:18px; width:8px; height:8px; border-radius:50%; background:var(--piquano-button);"></div>
+                    {% if not forloop.last %}<div style="position:absolute; left:3px; top:28px; bottom:0; width:2px; background:var(--piquano-border);"></div>{% endif %}
+                    <div style="font-size:14px; font-weight:600; color:var(--piquano-text);">{{ exp.title }}</div>
+                    {% if exp.company %}<div style="font-size:13px; color:var(--piquano-text-muted); margin-top:2px;">{{ exp.company }}{% if exp.start %} · {{ exp.start|truncatechars:4 }} – {{ exp.end|truncatechars:4|default:"heute" }}{% endif %}</div>{% endif %}
+                    {% if exp.description %}<p style="font-size:13px; color:var(--piquano-text); margin:6px 0 0; line-height:1.6; white-space:pre-line;">{{ exp.description }}</p>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# --- 3. Ausbildung --- #}
+        {% if k.custom_fields.education %}
+        <div class="card">
+            <div class="card-header"><h2>Ausbildung</h2></div>
+            <div class="card-body" style="padding:12px 20px;">
+                {% for edu in k.custom_fields.education %}
+                <div style="padding:8px 0;{% if not forloop.last %} border-bottom:1px solid var(--piquano-border);{% endif %}">
+                    <div style="font-size:14px; font-weight:600; color:var(--piquano-text);">{{ edu.degree }}{% if edu.major %} — {{ edu.major|truncatechars:80 }}{% endif %}</div>
+                    {% if edu.institution %}<div style="font-size:13px; color:var(--piquano-text-muted); margin-top:2px;">{{ edu.institution }}{% if edu.end %} · {{ edu.end }}{% endif %}</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {# --- 4. Notizen --- #}
+        <div class="card">
+            <div class="card-header"><h2>Notizen</h2></div>
+            <div class="card-body">
+                {% if k_note_url %}
+                <form method="post" action="{{ k_note_url }}" style="margin-bottom:16px;">
+                    {% csrf_token %}
+                    <textarea name="note_text" rows="3" class="form-input" placeholder="Neue Notiz..." style="width:100%; margin-bottom:8px;"></textarea>
+                    <button type="submit" class="btn btn-sm btn-primary">Notiz speichern</button>
+                </form>
+                {% endif %}
+                {% for note in k_notes %}
+                <div class="note-entry">
+                    <div class="note-meta">
+                        <span style="font-weight:600;">{{ note.author|default:"System" }}</span>
+                        <span>{{ note.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <p style="margin:0; font-size:14px; line-height:1.6;">{{ note.text|linebreaksbr }}</p>
+                </div>
+                {% empty %}
+                <p style="color:var(--piquano-text-muted); font-size:13px;">Noch keine Notizen.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# === Full-Width Sections === #}
+
+{# --- Bewerbungen (ATS) --- #}
+{% if k_applications %}
+<div class="card" style="margin-top:20px;">
+    <div class="card-header"><h2>Bewerbungen ({{ k_applications|length }})</h2></div>
+    <div class="card-body" style="padding:0;">
+        <table>
+            <thead><tr><th>Projekt</th><th>Stage</th><th>KI-Score</th><th>Beworben am</th></tr></thead>
+            <tbody>
+                {% for app in k_applications %}
+                <tr>
+                    <td class="td-primary">{{ app.job.title }}</td>
+                    <td><span class="badge" style="background:{{ app.stage.color }}20; color:{{ app.stage.color }};">{{ app.stage.name }}</span></td>
+                    <td>{% if app.ai_score %}<span class="badge {% if app.ai_score >= 70 %}badge-green{% elif app.ai_score >= 40 %}badge-yellow{% else %}badge-red{% endif %}">{{ app.ai_score }}/100</span>{% else %}—{% endif %}</td>
+                    <td>{{ app.applied_at|date:"d.m.Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{# --- Deals (CRM) --- #}
+{% if k_deals %}
+<div class="card" style="margin-top:20px;">
+    <div class="card-header"><h2>Deals ({{ k_deals|length }})</h2></div>
+    <div class="card-body" style="padding:0;">
+        <table>
+            <thead><tr><th>Deal</th><th>Stage</th><th>Status</th><th>Wert</th></tr></thead>
+            <tbody>
+                {% for deal in k_deals %}
+                <tr>
+                    <td class="td-primary">{{ deal.title }}</td>
+                    <td>{{ deal.current_stage }}</td>
+                    <td><span class="badge badge-gray">{{ deal.get_status_display }}</span></td>
+                    <td style="font-weight:600;">{{ deal.value|floatformat:0 }} {{ deal.currency }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{# --- E-Mails --- #}
+{% if k_emails %}
+<div class="card" style="margin-top:20px;">
+    <div class="card-header"><h2>E-Mails ({{ k_emails|length }})</h2></div>
+    <div class="card-body" style="padding:0;">
+        <table>
+            <thead><tr><th style="width:32px;"></th><th>Betreff</th><th>Datum</th></tr></thead>
+            <tbody>
+                {% for mail in k_emails %}
+                <tr>
+                    <td style="text-align:center;">{% if mail.is_inbound %}<span style="color:var(--piquano-success);">↙</span>{% else %}<span style="color:var(--piquano-button);">↗</span>{% endif %}</td>
+                    <td class="td-primary">{{ mail.subject|default:"(ohne Betreff)"|truncatechars:60 }}</td>
+                    <td>{{ mail.date|date:"d.m.Y H:i" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{# --- Änderungsverlauf --- #}
+{% if k_audit_logs %}
+<details class="card" style="margin-top:20px;">
+    <summary class="card-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+        <h2>Änderungsverlauf ({{ k_audit_logs|length }})</h2>
+        <span style="font-size:11px; color:var(--piquano-text-muted);">▸</span>
+    </summary>
+    <div class="card-body" style="padding:0;">
+        <table>
+            <thead><tr><th>Datum</th><th>Aktion</th><th>User</th><th>Änderungen</th></tr></thead>
+            <tbody>
+                {% for log in k_audit_logs %}
+                <tr>
+                    <td style="white-space:nowrap;">{{ log.timestamp|date:"d.m.Y H:i" }}</td>
+                    <td><span class="badge {% if log.action == 'create' %}badge-green{% elif log.action == 'delete' %}badge-red{% else %}badge-blue{% endif %}">{{ log.get_action_display }}</span></td>
+                    <td>{{ log.user_display|default:"System" }}</td>
+                    <td style="font-size:12px; color:var(--piquano-text-muted);">{{ log.summary|default:"—" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</details>
+{% endif %}
+
+<style>
+@media (max-width: 900px) { .candidate-detail-grid { grid-template-columns: 1fr !important; } }
+</style>
