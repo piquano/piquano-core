@@ -334,6 +334,12 @@
 
 {% if k_ai_profile_url %}
 <script>
+function getCsrfToken() {
+    var c = document.cookie.match(/csrftoken=([^;]+)/);
+    if (c) return c[1];
+    var el = document.querySelector('[name=csrfmiddlewaretoken]');
+    return el ? el.value : '';
+}
 function aiGenerateProfile() {
     var btn = document.getElementById('ai-profile-btn');
     var container = document.getElementById('profile-text');
@@ -341,7 +347,7 @@ function aiGenerateProfile() {
     btn.textContent = 'Generiert …';
     fetch('{{ k_ai_profile_url }}', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCsrfToken()},
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
