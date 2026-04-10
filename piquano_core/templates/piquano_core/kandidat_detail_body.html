@@ -1,24 +1,3 @@
-{# Shared Kandidaten-Detail Body — used by ATS + CRM.
-   Required context variables:
-     k              — Kandidat/Contact object
-     k_list_url     — URL zur Kandidaten-Liste
-     k_edit_url     — URL zum Bearbeiten
-     k_mail_url     — URL zum E-Mail senden (optional)
-     k_note_url     — URL zum Notiz speichern (optional)
-     k_delete_url   — URL zur DSGVO-Löschung (optional)
-     k_documents    — QuerySet/Liste von Dokumenten (optional)
-     k_emails       — QuerySet/Liste von E-Mails (optional)
-     k_notes        — QuerySet/Liste von Notizen (optional)
-     k_applications — QuerySet von Bewerbungen (optional, ATS)
-     k_deals        — QuerySet von Deals (optional, CRM)
-     k_audit_logs   — QuerySet von Audit-Logs (optional)
-     k_consents     — QuerySet von Consents (optional, CRM)
-     k_consent_url  — URL für Consent-Update (optional, CRM)
-     k_gdpr_export_url — URL für DSGVO-Export (optional, CRM)
-     k_lock_url     — URL für DSGVO-Lock (optional, CRM)
-     k_app_name     — "ATS" oder "CRM"
-#}
-
 {# === Header === #}
 <div class="actions-bar">
     <div class="actions-left">
