@@ -305,10 +305,10 @@
 {% endif %}
 
 {% if k_audit_logs %}
-<details class="card" style="margin-top:20px;">
+<details class="card" style="margin-top:20px;" open>
     <summary class="card-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
         <h2>Änderungsverlauf ({{ k_audit_logs|length }})</h2>
-        <span style="font-size:11px; color:var(--piquano-text-muted);">▸</span>
+        <span style="font-size:11px; color:var(--piquano-text-muted);">▾</span>
     </summary>
     <div class="card-body" style="padding:0;">
         <table>
