@@ -182,28 +182,42 @@
 
                 <div style="margin-top:16px; padding-top:14px; border-top:1px solid var(--piquano-border);">
                     <h3 style="font-size:13px; font-weight:600; color:var(--piquano-text); margin:0 0 10px; display:flex; align-items:center; gap:6px;">
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                         DSGVO / Datenschutz
                     </h3>
-                    <div style="font-size:12px; color:var(--piquano-text-muted); line-height:1.5; padding:10px; background:var(--piquano-bg); border-radius:var(--piquano-radius-md); margin-bottom:12px;">
-                        <strong>Art. 15</strong> Auskunftsrecht · <strong>Art. 18</strong> Einschränkung · <strong>Art. 17</strong> Löschung
+                    <div style="font-size:0.8rem; color:var(--piquano-text-muted); line-height:1.5; margin-top:0.75rem; padding:0.75rem; background:var(--piquano-bg); border-radius:var(--piquano-radius-md);">
+                        <strong>Art. 15 — Auskunftsrecht:</strong> JSON-Export aller gespeicherten Daten dieses Kontakts.<br>
+                        <strong>Art. 20 — Datenübertragbarkeit:</strong> PDF-Export zum Weitergeben an andere Anbieter.<br>
+                        <strong>Art. 18 — Einschränkung:</strong> Sperrt den Kontakt gegen Verarbeitung (umkehrbar).<br>
+                        <strong>Art. 17 — Löschung:</strong> Anonymisiert alle personenbezogenen Daten unwiderruflich.
                     </div>
-                    {% if k_gdpr_export_url %}
-                    <div style="display:flex; gap:6px; margin-bottom:8px;">
-                        <a href="{{ k_gdpr_export_url }}" class="btn btn-sm btn-secondary" style="flex:1; text-align:center; font-size:12px;">Export JSON (Art. 15)</a>
-                        <a href="{{ k_gdpr_export_url }}?format=pdf" class="btn btn-sm btn-secondary" style="flex:1; text-align:center; font-size:12px;">Export PDF (Art. 20)</a>
+                    <div style="display:flex; flex-direction:column; gap:0.75rem; margin-top:0.75rem;">
+                        <div style="display:flex; gap:0.5rem;">
+                            {% if k_gdpr_export_url %}
+                            <a href="{{ k_gdpr_export_url }}" class="btn btn-primary" style="flex:1; text-align:center; font-size:0.85rem;">Daten exportieren — JSON (Art. 15)</a>
+                            <a href="{{ k_gdpr_export_url }}?format=pdf" class="btn btn-primary" style="flex:1; text-align:center; font-size:0.85rem;">Daten exportieren — PDF (Art. 20)</a>
+                            {% else %}
+                            <span class="btn btn-secondary" style="flex:1; text-align:center; font-size:0.85rem; opacity:0.5; cursor:default;">Daten exportieren — JSON (Art. 15)</span>
+                            <span class="btn btn-secondary" style="flex:1; text-align:center; font-size:0.85rem; opacity:0.5; cursor:default;">Daten exportieren — PDF (Art. 20)</span>
+                            {% endif %}
+                        </div>
+                        {% if k_lock_url %}
+                        <form method="post" action="{{ k_lock_url }}">{% csrf_token %}
+                            {% if k.is_locked %}
+                            <button type="submit" class="btn btn-primary" style="width:100%; font-size:0.85rem;">Verarbeitung freigeben (Art. 18) — aktuell gesperrt</button>
+                            {% else %}
+                            <button type="submit" class="btn btn-primary" style="width:100%; font-size:0.85rem;">Verarbeitung einschränken (Art. 18)</button>
+                            {% endif %}
+                        </form>
+                        {% endif %}
+                        {% if k_delete_url and not k.is_locked %}
+                        <form method="{% if k_delete_url %}post{% else %}get{% endif %}" action="{{ k_delete_url }}" {% if k_delete_url %}onsubmit="return confirm('ACHTUNG: Diese Aktion kann nicht rückgängig gemacht werden!\n\nAlle personenbezogenen Daten werden unwiderruflich anonymisiert.\n\nWirklich fortfahren?');"{% endif %}>
+                            {% csrf_token %}
+                            {% if k_delete_url %}<input type="hidden" name="confirm_anonymize" value="ja">{% endif %}
+                            <button type="submit" class="btn btn-danger" style="width:100%; font-size:0.85rem;">Daten anonymisieren (Art. 17) — unwiderruflich</button>
+                        </form>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                    {% if k_lock_url %}
-                    <form method="post" action="{{ k_lock_url }}" style="margin-bottom:8px;">{% csrf_token %}
-                        <button type="submit" class="btn btn-sm btn-secondary" style="width:100%; font-size:12px;">
-                            {% if k.is_locked %}Freigeben (Art. 18) — gesperrt{% else %}Einschränken (Art. 18){% endif %}
-                        </button>
-                    </form>
-                    {% endif %}
-                    {% if k_delete_url and not k.is_locked %}
-                    <a href="{{ k_delete_url }}" class="btn btn-sm" style="width:100%; text-align:center; font-size:12px; background:var(--piquano-danger); color:#fff; border-color:var(--piquano-danger);">Anonymisieren (Art. 17) — unwiderruflich</a>
-                    {% endif %}
                 </div>
             </div>
         </details>
