@@ -86,19 +86,54 @@
     {# ====== RIGHT ====== #}
     <div style="display:flex; flex-direction:column; gap:20px;">
 
-        {# --- 1. Profil --- #}
-        {% if k_funktionsbereiche or k.skills or k.tags.all %}
+        {# --- 1. Profil (KI-Zusammenfassung + Skills/Tags) --- #}
         <div class="card">
-            <div class="card-header"><h2>Profil</h2></div>
+            <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h2>Profil</h2>
+                {% if k_ai_profile_url %}
+                <button type="button" class="btn btn-sm btn-secondary" id="ai-profile-btn" onclick="aiGenerateProfile()">KI-Profil generieren</button>
+                {% endif %}
+            </div>
             <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+                <div id="profile-text">
+                    {% if k.kurzbeschreibung %}
+                    <p style="font-size:14px; line-height:1.7; color:var(--piquano-text); margin:0;">{{ k.kurzbeschreibung|linebreaksbr }}</p>
+                    {% else %}
+                    <p style="font-size:13px; color:var(--piquano-text-muted); margin:0;">Noch kein Profil vorhanden. Klicke "KI-Profil generieren" um eine Zusammenfassung aus der Berufserfahrung zu erstellen.</p>
+                    {% endif %}
+                </div>
                 {% if k_funktionsbereiche %}<div><h3 class="detail-section-title">Funktionsbereiche</h3><p style="font-size:14px; color:var(--piquano-text); margin:0;">{{ k_funktionsbereiche }}</p></div>{% endif %}
                 {% if k.skills %}<div><h3 class="detail-section-title">Skills</h3><div class="tag-list">{% for skill in k.skills %}<span class="tag">{{ skill }}</span>{% endfor %}</div></div>{% endif %}
                 {% if k.tags.all %}<div><h3 class="detail-section-title">Tags</h3><div class="tag-list">{% for tag in k.tags.all %}<span class="tag">{{ tag.name }}</span>{% endfor %}</div></div>{% endif %}
             </div>
         </div>
-        {% endif %}
 
-        {# --- 2. Datenschutz (collapsible, offen) --- #}
+        {# --- 2. Notizen --- #}
+        <div class="card">
+            <div class="card-header"><h2>Notizen</h2></div>
+            <div class="card-body">
+                {% if k_note_url %}
+                <form method="post" action="{{ k_note_url }}" style="margin-bottom:16px;">
+                    {% csrf_token %}
+                    <textarea name="note_text" rows="3" class="form-input" placeholder="Neue Notiz..." style="width:100%; margin-bottom:8px;"></textarea>
+                    <button type="submit" class="btn btn-sm btn-primary">Notiz speichern</button>
+                </form>
+                {% endif %}
+                {% for note in k_notes %}
+                <div class="note-entry">
+                    <div class="note-meta">
+                        <span style="font-weight:600;">{{ note.author|default:"System" }}</span>
+                        <span>{{ note.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <p style="margin:0; font-size:14px; line-height:1.6;">{{ note.text|linebreaksbr }}</p>
+                </div>
+                {% empty %}
+                <p style="color:var(--piquano-text-muted); font-size:13px;">Noch keine Notizen.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# --- 3. Datenschutz (collapsible, offen) --- #}
         <details class="card" open>
             <summary class="card-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                 <h2>Datenschutz</h2>
@@ -188,30 +223,6 @@
             </div>
         </details>
 
-        {# --- 4. Notizen --- #}
-        <div class="card">
-            <div class="card-header"><h2>Notizen</h2></div>
-            <div class="card-body">
-                {% if k_note_url %}
-                <form method="post" action="{{ k_note_url }}" style="margin-bottom:16px;">
-                    {% csrf_token %}
-                    <textarea name="note_text" rows="3" class="form-input" placeholder="Neue Notiz..." style="width:100%; margin-bottom:8px;"></textarea>
-                    <button type="submit" class="btn btn-sm btn-primary">Notiz speichern</button>
-                </form>
-                {% endif %}
-                {% for note in k_notes %}
-                <div class="note-entry">
-                    <div class="note-meta">
-                        <span style="font-weight:600;">{{ note.author|default:"System" }}</span>
-                        <span>{{ note.created_at|date:"d.m.Y H:i" }}</span>
-                    </div>
-                    <p style="margin:0; font-size:14px; line-height:1.6;">{{ note.text|linebreaksbr }}</p>
-                </div>
-                {% empty %}
-                <p style="color:var(--piquano-text-muted); font-size:13px;">Noch keine Notizen.</p>
-                {% endfor %}
-            </div>
-        </div>
     </div>
 </div>
 
@@ -306,3 +317,33 @@
 <style>
 @media (max-width: 900px) { .candidate-detail-grid { grid-template-columns: 1fr !important; } }
 </style>
+
+{% if k_ai_profile_url %}
+<script>
+function aiGenerateProfile() {
+    var btn = document.getElementById('ai-profile-btn');
+    var container = document.getElementById('profile-text');
+    btn.disabled = true;
+    btn.textContent = 'Generiert …';
+    fetch('{{ k_ai_profile_url }}', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        btn.disabled = false;
+        btn.textContent = 'KI-Profil generieren';
+        if (data.ok) {
+            container.innerHTML = '<p style="font-size:14px; line-height:1.7; color:var(--piquano-text); margin:0;">' + data.profile.replace(/\n/g, '<br>') + '</p>';
+        } else {
+            container.innerHTML = '<p style="color:var(--piquano-danger); font-size:13px;">Fehler: ' + (data.error || 'Unbekannt') + '</p>';
+        }
+    })
+    .catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'KI-Profil generieren';
+        container.innerHTML = '<p style="color:var(--piquano-danger); font-size:13px;">Netzwerkfehler</p>';
+    });
+}
+</script>
+{% endif %}
