@@ -124,12 +124,12 @@ a:hover { text-decoration: underline; }
   min-height: 100vh;
   padding: var(--piquano-space-5) 0;
 }
-.pq-sidebar a {
+.pq-sidebar a:not(.pq-sidebar__brand-link) {
   display: block;
   padding: var(--piquano-space-3) var(--piquano-space-5);
   color: var(--piquano-sidebar-text);
 }
-.pq-sidebar a:hover,
+.pq-sidebar a:not(.pq-sidebar__brand-link):hover,
 .pq-sidebar a.active {
   background: rgba(255, 255, 255, 0.08);
   text-decoration: none;
