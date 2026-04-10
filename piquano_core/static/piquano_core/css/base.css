@@ -103,8 +103,9 @@ a:hover { text-decoration: underline; }
   color: var(--piquano-text);
   border-color: var(--piquano-border);
 }
-.pq-btn--secondary:hover { background: var(--piquano-bg); }
-.pq-btn--danger { background: var(--piquano-danger); }
+.pq-btn--secondary:hover { background: var(--piquano-bg); color: var(--piquano-text); }
+.pq-btn--danger { background: var(--piquano-danger); color: #fff; }
+.pq-btn--danger:hover { background: #b42318; }
 
 /* Card */
 .pq-card {
