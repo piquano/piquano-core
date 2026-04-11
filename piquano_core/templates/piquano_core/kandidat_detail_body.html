@@ -387,13 +387,20 @@
 
 {% if k_emails %}
 <div class="card" style="margin-top:20px;">
-    <div class="card-header"><h2>E-Mails ({{ k_emails|length }})</h2></div>
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>E-Mails ({{ k_emails|length }})</h2>
+        {% if k_mail_url %}<a href="{{ k_mail_url|default:'#' }}" class="btn btn-sm btn-secondary">Neue E-Mail</a>{% endif %}
+    </div>
     <div class="card-body" style="padding:0;">
         <table>
             <thead><tr><th style="width:32px;"></th><th>Betreff</th><th>Datum</th></tr></thead>
             <tbody>
                 {% for mail in k_emails %}
+                {% if k_mail_thread_url %}
+                <tr class="k-mail-row" data-href="{{ k_mail_thread_url }}" style="cursor:pointer;">
+                {% else %}
                 <tr>
+                {% endif %}
                     <td style="text-align:center;">{% if mail.is_inbound %}<span style="color:var(--piquano-success);">↙</span>{% else %}<span style="color:var(--piquano-button);">↗</span>{% endif %}</td>
                     <td class="td-primary">{{ mail.subject|default:"(ohne Betreff)"|truncatechars:60 }}</td>
                     <td>{{ mail.date|date:"d.m.Y H:i" }}</td>
@@ -403,6 +410,15 @@
         </table>
     </div>
 </div>
+<style>.k-mail-row:hover { background:var(--piquano-bg); }</style>
+<script>
+document.querySelectorAll('.k-mail-row[data-href]').forEach(function(row) {
+    row.addEventListener('click', function(e) {
+        if (e.target.closest('a, button')) return;
+        window.location.href = row.dataset.href;
+    });
+});
+</script>
 {% endif %}
 
 {% if k_audit_logs %}
