@@ -101,7 +101,7 @@
             <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
                 <div id="profile-text">
                     {% if k.kurzbeschreibung %}
-                    <p style="font-size:14px; line-height:1.7; color:var(--piquano-text); margin:0;">{{ k.kurzbeschreibung|linebreaksbr }}</p>
+                    <div style="font-size:14px; line-height:1.7; color:var(--piquano-text);" class="rich-text">{{ k.kurzbeschreibung|safe }}</div>
                     {% else %}
                     <p style="font-size:13px; color:var(--piquano-text-muted); margin:0;">Noch kein Profil vorhanden. Klicke "KI-Profil generieren" um eine Zusammenfassung aus der Berufserfahrung zu erstellen.</p>
                     {% endif %}
@@ -115,8 +115,8 @@
         <div class="card">
             <div class="card-header"><h2>Schwerpunkte &amp; Kompetenzen</h2></div>
             <div class="card-body" style="display:flex; flex-direction:column; gap:14px;">
-                {% if k.schwerpunkte %}<div><h3 class="detail-section-title">Schwerpunkte</h3><p style="font-size:14px; line-height:1.6; color:var(--piquano-text); margin:0; white-space:pre-line;">{{ k.schwerpunkte }}</p></div>{% endif %}
-                {% if k.kompetenzen %}<div><h3 class="detail-section-title">Kompetenzen</h3><p style="font-size:14px; line-height:1.6; color:var(--piquano-text); margin:0; white-space:pre-line;">{{ k.kompetenzen }}</p></div>{% endif %}
+                {% if k.schwerpunkte %}<div><h3 class="detail-section-title">Schwerpunkte</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.schwerpunkte|safe }}</div></div>{% endif %}
+                {% if k.kompetenzen %}<div><h3 class="detail-section-title">Kompetenzen</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.kompetenzen|safe }}</div></div>{% endif %}
             </div>
         </div>
         {% endif %}
