@@ -9,6 +9,7 @@
         <div>
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <h1 style="font-size:22px; font-weight:700; margin:0; color:var(--piquano-text);">{{ k.first_name }} {{ k.last_name }}</h1>
+                {% for tag in k_partnership_tags %}<span class="badge" style="background:#10b981; color:#fff;">{{ tag }}</span>{% endfor %}
                 {% if k.is_potential_partner %}<span class="badge badge-green">Potenzieller Partner</span>{% endif %}
                 {% if k.is_locked %}<span class="badge badge-red">DSGVO-anonymisiert</span>
                 {% elif k.marketing_consent %}<span class="badge badge-green">DSGVO OK</span>
