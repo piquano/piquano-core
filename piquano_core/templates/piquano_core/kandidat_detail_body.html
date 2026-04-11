@@ -111,10 +111,18 @@
         </div>
 
         {# --- 1b. Schwerpunkte & Kompetenzen --- #}
-        {% if k.schwerpunkte or k.kompetenzen %}
+        {% if k.schwerpunkte or k.kompetenzen or k.tagessatz or k.verfuegbar_ab or k.branchen or k.verticals %}
         <div class="card">
             <div class="card-header"><h2>Schwerpunkte &amp; Kompetenzen</h2></div>
             <div class="card-body" style="display:flex; flex-direction:column; gap:14px;">
+                {% if k.tagessatz or k.verfuegbar_ab %}
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+                    {% if k.tagessatz %}<div><h3 class="detail-section-title">Tagessatz</h3><p style="font-size:14px; color:var(--piquano-text); margin:0;">{{ k.tagessatz }} EUR / Tag</p></div>{% endif %}
+                    {% if k.verfuegbar_ab %}<div><h3 class="detail-section-title">Verfügbar ab</h3><p style="font-size:14px; color:var(--piquano-text); margin:0;">{{ k.verfuegbar_ab|date:"d.m.Y" }}</p></div>{% endif %}
+                </div>
+                {% endif %}
+                {% if k.branchen %}<div><h3 class="detail-section-title">Branchen-Erfahrung</h3><div class="tag-list">{% for b in k.branchen_labels %}<span class="tag">{{ b }}</span>{% endfor %}</div></div>{% endif %}
+                {% if k.verticals %}<div><h3 class="detail-section-title">Piquano-Verticals</h3><div class="tag-list">{% for v in k.vertical_labels %}<span class="tag">{{ v }}</span>{% endfor %}</div></div>{% endif %}
                 {% if k.schwerpunkte %}<div><h3 class="detail-section-title">Schwerpunkte</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.schwerpunkte|safe }}</div></div>{% endif %}
                 {% if k.kompetenzen %}<div><h3 class="detail-section-title">Kompetenzen</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.kompetenzen|safe }}</div></div>{% endif %}
             </div>
