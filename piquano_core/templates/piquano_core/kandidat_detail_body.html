@@ -1,7 +1,11 @@
 {# === Header: Avatar + Name + E-Mail + Telefon + Badges + Actions === #}
 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
     <div style="display:flex; align-items:center; gap:16px;">
+        {% if k.foto_url %}
+        <img src="{{ k.foto_url }}" alt="{{ k.first_name }} {{ k.last_name }}" style="width:64px; height:64px; border-radius:50%; object-fit:cover; flex-shrink:0; background:var(--piquano-bg);" onerror="this.outerHTML='<div style=\'width:64px; height:64px; border-radius:50%; background:var(--piquano-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; flex-shrink:0;\'>{{ k.first_name|first|upper }}{{ k.last_name|first|upper }}</div>'">
+        {% else %}
         <div style="width:64px; height:64px; border-radius:50%; background:var(--piquano-primary); color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; flex-shrink:0;">{{ k.first_name|first|upper }}{{ k.last_name|first|upper }}</div>
+        {% endif %}
         <div>
             <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
                 <h1 style="font-size:22px; font-weight:700; margin:0; color:var(--piquano-text);">{{ k.first_name }} {{ k.last_name }}</h1>
@@ -102,11 +106,20 @@
                     <p style="font-size:13px; color:var(--piquano-text-muted); margin:0;">Noch kein Profil vorhanden. Klicke "KI-Profil generieren" um eine Zusammenfassung aus der Berufserfahrung zu erstellen.</p>
                     {% endif %}
                 </div>
-                {% if k_funktionsbereiche %}<div><h3 class="detail-section-title">Funktionsbereiche</h3><p style="font-size:14px; color:var(--piquano-text); margin:0;">{{ k_funktionsbereiche }}</p></div>{% endif %}
-                {% if k.skills %}<div><h3 class="detail-section-title">Skills</h3><div class="tag-list">{% for skill in k.skills %}<span class="tag">{{ skill }}</span>{% endfor %}</div></div>{% endif %}
                 {% if k.tags.all %}<div><h3 class="detail-section-title">Tags</h3><div class="tag-list">{% for tag in k.tags.all %}<span class="tag">{{ tag.name }}</span>{% endfor %}</div></div>{% endif %}
             </div>
         </div>
+
+        {# --- 1b. Schwerpunkte & Kompetenzen --- #}
+        {% if k.schwerpunkte or k.kompetenzen %}
+        <div class="card">
+            <div class="card-header"><h2>Schwerpunkte &amp; Kompetenzen</h2></div>
+            <div class="card-body" style="display:flex; flex-direction:column; gap:14px;">
+                {% if k.schwerpunkte %}<div><h3 class="detail-section-title">Schwerpunkte</h3><p style="font-size:14px; line-height:1.6; color:var(--piquano-text); margin:0; white-space:pre-line;">{{ k.schwerpunkte }}</p></div>{% endif %}
+                {% if k.kompetenzen %}<div><h3 class="detail-section-title">Kompetenzen</h3><p style="font-size:14px; line-height:1.6; color:var(--piquano-text); margin:0; white-space:pre-line;">{{ k.kompetenzen }}</p></div>{% endif %}
+            </div>
+        </div>
+        {% endif %}
 
         {# --- 2. Notizen --- #}
         <div class="card">
@@ -222,18 +235,98 @@
             </div>
         </details>
 
-        {# --- 3. Datenherkunft (collapsible, geschlossen) --- #}
+        {# --- 3. Datenherkunft (collapsible, geschlossen) - unveränderlicher DSGVO-Audit-Trail --- #}
         <details class="card">
             <summary class="card-header" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
                 <h2>Datenherkunft</h2>
                 <span style="font-size:11px; color:var(--piquano-text-muted);">▸</span>
             </summary>
-            <div class="card-body" style="padding:0;">
+            <div class="card-body">
+                {% with dp=k.data_provenance %}
+                <div style="font-size:0.8rem; color:var(--piquano-text-muted); line-height:1.5; margin-bottom:12px; padding:0.6rem 0.8rem; background:var(--piquano-bg); border-left:3px solid var(--piquano-button); border-radius:4px;">
+                    Unveränderlicher Audit-Trail. Wird nur beim Erst-Import befüllt und dient als
+                    DSGVO-Nachweis über die Verarbeitungsgrundlage.
+                </div>
+
+                <h3 class="detail-section-title">Quelle &amp; Import</h3>
+                <dl class="detail-dl" style="margin:0 0 16px;">
+                    <div><dt>Quellsystem</dt><dd>{% if dp.source_system %}{{ dp.source_system }}{% else %}—{% endif %}</dd></div>
+                    <div><dt>Quell-ID</dt><dd>{% if dp.source_id %}{{ dp.source_id }}{% else %}—{% endif %}</dd></div>
+                    <div><dt>Kategorie</dt><dd>{% if dp.source_category %}{{ dp.source_category }}{% else %}{{ k.get_source_display }}{% endif %}</dd></div>
+                    {% if dp.source_url %}<div><dt>Original-Link</dt><dd><a href="{{ dp.source_url }}" target="_blank" rel="noopener" style="color:var(--piquano-button);">Recruitee öffnen ↗</a></dd></div>{% endif %}
+                    {% if dp.original_created_at %}<div><dt>Erst-Erstellung (Quelle)</dt><dd>{{ dp.original_created_at }}</dd></div>{% endif %}
+                    {% if dp.original_updated_at %}<div><dt>Letzte Änderung (Quelle)</dt><dd>{{ dp.original_updated_at }}</dd></div>{% endif %}
+                    {% if dp.imported_at %}<div><dt>Importiert am</dt><dd>{{ dp.imported_at }}</dd></div>{% endif %}
+                    {% if dp.import_version %}<div><dt>Import-Version</dt><dd>{{ dp.import_version }}</dd></div>{% endif %}
+                    <div><dt>Im ATS erstellt</dt><dd>{{ k.created_at|date:"d.m.Y H:i" }}</dd></div>
+                    <div><dt>Im ATS geändert</dt><dd>{{ k.updated_at|date:"d.m.Y H:i" }}</dd></div>
+                </dl>
+
+                {% if dp.gdpr %}
+                <h3 class="detail-section-title">DSGVO-Status (Quelle)</h3>
+                <dl class="detail-dl" style="margin:0 0 16px;">
+                    <div><dt>Status</dt><dd>{{ dp.gdpr.status|default:"—" }}</dd></div>
+                    <div><dt>Jemals erteilt</dt><dd>{% if dp.gdpr.ever_given %}ja{% else %}nein{% endif %}</dd></div>
+                    {% if dp.gdpr.expires_at %}<div><dt>Ablauf</dt><dd>{{ dp.gdpr.expires_at }}</dd></div>{% endif %}
+                    {% if dp.gdpr.consent_request_sent_at %}<div><dt>Anfrage gesendet</dt><dd>{{ dp.gdpr.consent_request_sent_at }}</dd></div>{% endif %}
+                    {% if dp.gdpr.consent_request_completed_at %}<div><dt>Anfrage beantwortet</dt><dd>{{ dp.gdpr.consent_request_completed_at }}</dd></div>{% endif %}
+                    {% if dp.gdpr.scheduled_to_delete_at %}<div><dt>Geplante Löschung</dt><dd>{{ dp.gdpr.scheduled_to_delete_at }}</dd></div>{% endif %}
+                </dl>
+                {% endif %}
+
+                {% if dp.legal_consents %}
+                <h3 class="detail-section-title">Einwilligungs-Nachweise</h3>
+                <div style="display:flex; flex-direction:column; gap:10px; margin:0 0 16px;">
+                    {% for c in dp.legal_consents %}
+                    <div style="padding:10px 12px; background:var(--piquano-bg); border-left:3px solid var(--piquano-success); border-radius:4px;">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:6px;">
+                            <span class="badge badge-green">Zugestimmt</span>
+                            <span style="font-size:11px; color:var(--piquano-text-muted);">{{ c.accepted_at }}</span>
+                        </div>
+                        <div style="font-size:13px; color:var(--piquano-text); line-height:1.6;">{{ c.question_html|safe }}</div>
+                        <div style="font-size:11px; color:var(--piquano-text-muted); margin-top:8px; display:flex; gap:12px; flex-wrap:wrap;">
+                            {% if c.offer_title %}<span>Offer: <strong>{{ c.offer_title }}</strong>{% if c.offer_lang %} ({{ c.offer_lang }}){% endif %}</span>{% endif %}
+                            {% if c.question_id %}<span>Frage-ID: {{ c.question_id }}</span>{% endif %}
+                            {% if c.offer_id %}<span>Offer-ID: {{ c.offer_id }}</span>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if dp.applications %}
+                <h3 class="detail-section-title">Bewerbungen (Quelle)</h3>
+                <ul style="margin:0 0 16px; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px;">
+                    {% for a in dp.applications %}
+                    <li style="font-size:13px; color:var(--piquano-text);">
+                        {% if a.offer_title %}<strong>{{ a.offer_title }}</strong>{% elif a.kind == "talent_pool" %}<em>Talent-Pool #{{ a.talent_pool_id }}</em>{% else %}Offer #{{ a.offer_id }}{% endif %}
+                        {% if a.applied_at %}<span style="color:var(--piquano-text-muted); font-size:11px;"> — {{ a.applied_at }}</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if dp.documents %}
+                <h3 class="detail-section-title">Dokument-Herkunft</h3>
+                <ul style="margin:0 0 16px; padding:0; list-style:none; display:flex; flex-direction:column; gap:4px;">
+                    {% for d in dp.documents %}
+                    <li style="font-size:12px; color:var(--piquano-text-muted);">{{ d.type }} — {{ d.recruitee_url|truncatechars:60 }}</li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+
+                {% if dp.import_note %}
+                <p style="font-size:11px; color:var(--piquano-text-muted); margin:12px 0 0; font-style:italic; line-height:1.5;">{{ dp.import_note }}</p>
+                {% endif %}
+
+                {% if not dp %}
                 <dl class="detail-dl" style="margin:0; padding:0 20px;">
                     <div><dt>Quelle</dt><dd>{{ k.get_source_display }}</dd></div>
                     <div><dt>Erstellt</dt><dd>{{ k.created_at|date:"d.m.Y H:i" }}</dd></div>
                     <div><dt>Geändert</dt><dd>{{ k.updated_at|date:"d.m.Y H:i" }}</dd></div>
                 </dl>
+                {% endif %}
+                {% endwith %}
             </div>
         </details>
 
