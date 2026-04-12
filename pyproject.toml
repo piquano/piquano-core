@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piquano-core"
-version = "0.8.0"
-description = "Shared building blocks for PIQUANO Django apps (auth, CRM client, mail, audit)"
+version = "0.9.0"
+description = "Shared building blocks for Piquano Django apps (auth, CRM client, MS365 mail, audit)"
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [{ name = "PIQUANO", email = "noreply@piquano.com" }]
@@ -16,6 +16,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ms365 = [
+    "msal>=1.24",
+    "cryptography>=41",
+]
 dev = [
     "pytest>=7",
     "pytest-django>=4",
@@ -28,7 +32,11 @@ include-package-data = true
 include = ["piquano_core*"]
 
 [tool.setuptools.package-data]
-piquano_core = ["static/piquano_core/css/*.css", "templates/piquano_core/*.html"]
+piquano_core = [
+    "static/piquano_core/css/*.css",
+    "templates/piquano_core/*.html",
+    "templates/piquano_ms365/*.html",
+]
 
 [tool.ruff]
 target-version = "py310"

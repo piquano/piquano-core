@@ -123,7 +123,7 @@
                 </div>
                 {% endif %}
                 {% if k.branchen %}<div><h3 class="detail-section-title">Branchen-Erfahrung</h3><div class="tag-list">{% for b in k.branchen_labels %}<span class="tag">{{ b }}</span>{% endfor %}</div></div>{% endif %}
-                {% if k.verticals %}<div><h3 class="detail-section-title">Piquano-Verticals</h3><div class="tag-list">{% for v in k.vertical_labels %}<span class="tag">{{ v }}</span>{% endfor %}</div></div>{% endif %}
+                {% if k.verticals %}<div><h3 class="detail-section-title">Piquano-Verticals</h3><div class="tag-list">{% for v in k.vertical_labels %}<span class="tag tag-vertical">{{ v }}</span>{% endfor %}</div></div>{% endif %}
                 {% if k.schwerpunkte %}<div><h3 class="detail-section-title">Schwerpunkte</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.schwerpunkte|safe }}</div></div>{% endif %}
                 {% if k.kompetenzen %}<div><h3 class="detail-section-title">Kompetenzen</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.kompetenzen|safe }}</div></div>{% endif %}
             </div>

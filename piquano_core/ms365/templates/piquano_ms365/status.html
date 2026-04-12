@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Microsoft 365 — Einstellungen{% endblock %}
+{% block page_title %}Microsoft 365{% endblock %}
+
+{% block content %}
+<div style="max-width:640px;">
+    <div class="card">
+        <div style="padding:1.5rem;">
+            {% if not configured %}
+            <div style="padding:16px; background:#fef3c7; border-radius:8px; margin-bottom:16px; font-size:14px; color:#92400e;">
+                MS365-Integration ist noch nicht konfiguriert (MS365_CLIENT_ID fehlt in .env).
+            </div>
+            {% endif %}
+
+            {% if account %}
+            <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+                <div style="width:40px; height:40px; border-radius:50%; background:#133447; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600;">
+                    {{ account.upn|first|upper }}
+                </div>
+                <div>
+                    <div style="font-weight:600; font-size:15px;">{{ account.upn }}</div>
+                    <div style="font-size:13px; color:var(--piquano-text-muted);">
+                        Verbunden seit {{ account.connected_at|date:"d.m.Y H:i" }}
+                    </div>
+                </div>
+                <span style="margin-left:auto; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:600;
+                    {% if account.is_healthy %}background:#dcfce7; color:#166534;{% else %}background:#fecaca; color:#991b1b;{% endif %}">
+                    {{ account.get_status_display }}
+                </span>
+            </div>
+
+            {% if account.last_sync_at %}
+            <div style="font-size:13px; color:var(--piquano-text-muted); margin-bottom:16px;">
+                Letzter Sync: {{ account.last_sync_at|date:"d.m.Y H:i" }}
+                {% if account.last_sync_error %}
+                <div style="color:#dc2626; margin-top:4px;">Fehler: {{ account.last_sync_error|truncatechars:200 }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'piquano_ms365:disconnect' %}" style="margin-top:12px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-secondary" onclick="return confirm('Verbindung wirklich trennen?');">Verbindung trennen</button>
+            </form>
+
+            {% else %}
+            <p style="color:var(--piquano-text-muted); margin-bottom:16px;">
+                Verbinde dein Microsoft-365-Postfach, um E-Mails direkt senden und empfangen zu können.
+            </p>
+            {% if configured %}
+            <a href="{% url 'piquano_ms365:connect' %}" class="btn btn-primary">Mit Microsoft 365 verbinden</a>
+            {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
