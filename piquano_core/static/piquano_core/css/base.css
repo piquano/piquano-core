@@ -168,3 +168,82 @@ a:hover { text-decoration: underline; }
 .pq-pill--warning { background: #fef3c7; color: var(--piquano-warning); }
 .pq-pill--danger  { background: #fee4e2; color: var(--piquano-danger); }
 .pq-pill--info    { background: #e0f2fe; color: var(--piquano-info); }
+
+/* ============================================================
+   Responsive: Sidebar-Toggle + Mobile Layout
+   Shared across all Piquano apps (CRM, ATS, App, Ticket, LMS).
+   ============================================================ */
+
+/* Burger-Button — hidden on desktop */
+.sidebar-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 22px;
+  color: var(--piquano-text);
+  cursor: pointer;
+  padding: 4px 8px;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Sidebar-Overlay (mobile backdrop) */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 29;
+}
+.sidebar-overlay.open { display: block; }
+
+@media (max-width: 900px) {
+  /* Sidebar: off-screen, slide in on .open */
+  .pq-sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    height: 100vh;
+    z-index: 200;
+    transition: left 0.25s ease;
+  }
+  .pq-sidebar.open { left: 0; }
+
+  /* Show burger button */
+  .sidebar-toggle { display: block; }
+
+  /* Content: full width */
+  .main-wrapper,
+  .pq-main-wrapper { margin-left: 0 !important; }
+
+  /* Topbar: space-between for burger + user-menu */
+  .pq-topbar { justify-content: space-between; }
+
+  /* Tables: horizontal scroll */
+  .table-wrap { overflow: hidden; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { min-width: 600px; }
+
+  /* Grids: collapse to 1 column */
+  .grid-form { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+  .candidate-detail-grid { grid-template-columns: 1fr !important; }
+
+  /* Action bars: stack vertically */
+  .actions-bar { flex-direction: column; align-items: stretch; }
+  .detail-header { flex-direction: column; align-items: flex-start; }
+
+  /* Card headers: wrap */
+  .card-header { flex-wrap: wrap; gap: 8px; }
+
+  /* Bulk toolbars */
+  .bulk-toolbar { flex-wrap: wrap; gap: 8px; }
+
+  /* Pipelines: horizontal scroll */
+  .pipeline-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .pipeline-column { flex: 0 0 240px; }
+}
+
+@media (max-width: 480px) {
+  .main-content { padding: 16px; }
+}
