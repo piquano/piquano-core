@@ -4,6 +4,8 @@ Abstract Sync-Adapter — jede konsumierende App implementiert diesen.
 Pfad zur Klasse wird in settings.MS365_SYNC_ADAPTER konfiguriert.
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
 

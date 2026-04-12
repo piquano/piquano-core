@@ -1,4 +1,5 @@
 """OAuth-Flow-Helper für Microsoft Identity Platform (v2.0)."""
+from __future__ import annotations
 
 import logging
 import secrets
