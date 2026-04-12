@@ -10,9 +10,9 @@ Usage:
 
 from django.core.management.base import BaseCommand
 
+from piquano_core.ms365.graph import TokenInvalidError
 from piquano_core.ms365.models import MailAccount
 from piquano_core.ms365.sync import run_full_sync
-from piquano_core.ms365.graph import TokenInvalidError
 
 
 class Command(BaseCommand):

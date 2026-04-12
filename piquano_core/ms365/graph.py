@@ -4,8 +4,8 @@ import logging
 from datetime import timedelta
 
 import requests
-from django.utils import timezone
 from django.db import transaction
+from django.utils import timezone
 
 from . import oauth
 from .crypto import decrypt, encrypt

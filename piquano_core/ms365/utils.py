@@ -26,6 +26,7 @@ def addresses_from_message(msg: dict) -> set[str]:
 def parse_received(msg: dict, folder: str):
     """Parse receivedDateTime/sentDateTime from a Graph message."""
     from datetime import timezone as dt_timezone
+
     from django.utils.dateparse import parse_datetime
 
     raw = msg.get('receivedDateTime') if folder == 'Inbox' else msg.get('sentDateTime')

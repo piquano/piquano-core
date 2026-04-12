@@ -7,8 +7,9 @@ ms365-Modul kein Schema-Change nötig ist.
 """
 
 import uuid
-from django.db import models
+
 from django.conf import settings
+from django.db import models
 
 
 class MailAccount(models.Model):
