@@ -21,16 +21,16 @@
     <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn btn-secondary">Zurueck</a>
 </div>
 
-{% for app_label, toggles in grouped_toggles.items %}
+{% for app_key, app_data in grouped_toggles.items %}
 <div class="card" style="margin-bottom:20px;">
     <div class="card-header">
-        <h2 style="text-transform:uppercase; font-size:13px; letter-spacing:0.05em;">{{ app_label }}</h2>
+        <h2 style="font-size:14px; font-weight:700;">{{ app_data.label }}</h2>
     </div>
     <div class="card-body" style="padding:0;">
-        {% for toggle in toggles %}
+        {% for toggle in app_data.toggles %}
         <div class="toggle-card">
             <div class="toggle-info">
-                <div class="toggle-name">{{ toggle.module_name }}</div>
+                <div class="toggle-name">{{ toggle.display_name }}</div>
                 {% if toggle.description %}
                 <div class="toggle-desc">{{ toggle.description }}</div>
                 {% endif %}

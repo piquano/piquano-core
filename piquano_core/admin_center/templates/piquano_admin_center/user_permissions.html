@@ -26,28 +26,28 @@
 <form method="post" action="{% url 'piquano_admin_center:save_permissions' target_user.id %}">
     {% csrf_token %}
 
-    {% for app_label, modules in grouped_permissions.items %}
+    {% for app_key, app_data in grouped_permissions.items %}
     <div class="card perm-matrix-section">
         <div class="perm-matrix-app">
-            <span>{{ app_label }}</span>
+            <span>{{ app_data.label }}</span>
             <label class="select-all-label">
-                <input type="checkbox" class="select-all-app" data-app="{{ app_label }}" onchange="toggleAppPerms(this)">
+                <input type="checkbox" class="select-all-app" data-app="{{ app_key }}" onchange="toggleAppPerms(this)">
                 Alle auswaehlen
             </label>
         </div>
         <div class="card-body" style="padding:0;">
-            {% for module_name, perms in modules.items %}
+            {% for module_name, perms in app_data.modules.items %}
             <div class="perm-matrix-row">
-                <div class="perm-module">{{ module_name }}</div>
+                <div class="perm-module">{{ perms.0.module_label }}</div>
                 <div class="perm-checks">
                     {% for perm in perms %}
                     <label class="perm-check-item">
                         <input type="checkbox"
                                name="permissions"
                                value="{{ perm.id }}"
-                               class="perm-cb app-{{ app_label }}"
+                               class="perm-cb app-{{ app_key }}"
                                {% if perm.granted %}checked{% endif %}>
-                        {{ perm.codename }}
+                        {{ perm.codename_label }}
                     </label>
                     {% endfor %}
                 </div>

@@ -8,6 +8,62 @@ from __future__ import annotations
 
 from .registry import register_app
 
+APP_LABELS = {
+    "crm": "Piquano CRM",
+    "ats": "Piquano ATS",
+    "app": "Piquano Hub",
+    "lms": "Piquano LMS",
+    "ticket": "Piquano Ticketsystem",
+}
+
+MODULE_LABELS = {
+    # CRM
+    "crm.contacts": "Kontakte",
+    "crm.deals": "Deals & Pipeline",
+    "crm.activities": "Aktivitäten",
+    "crm.emails": "E-Mail-Kampagnen",
+    "crm.briefings": "Briefings",
+    "crm.reports": "Berichte",
+    "crm.workflows": "Workflows",
+    "crm.integrations": "Integrationen",
+    "crm.ms365": "Microsoft 365 Mail-Sync",
+    "crm.timeline": "Timeline",
+    "crm.accounts": "Benutzerverwaltung",
+    # ATS
+    "ats.candidates": "Kandidaten",
+    "ats.jobs": "Projekte & Ausschreibungen",
+    "ats.careers": "Karriereseite",
+    "ats.mail": "E-Mail-Postfach",
+    "ats.reports": "Berichte",
+    "ats.pipeline": "Pipeline-Board",
+    # App
+    "app.partners": "Partner-Profile",
+    "app.casestudies": "Referenzprojekte",
+    "app.wettbewerb": "Wettbewerbsanalyse",
+    "app.ki_beitrag": "KI-Beiträge",
+    "app.linkedin_review": "LinkedIn-Review",
+    "app.vertriebscoach": "Vertriebscoach",
+    "app.activities": "Aktivitäten",
+    # LMS
+    "lms.courses": "Kurse",
+    "lms.lessons": "Lektionen",
+    "lms.enrollments": "Einschreibungen",
+    "lms.certificates": "Zertifikate",
+    "lms.progress": "Fortschritt",
+    # Ticket
+    "ticket.tickets": "Tickets",
+    "ticket.comments": "Kommentare",
+    "ticket.categories": "Kategorien",
+    "ticket.assignments": "Zuweisungen",
+    "ticket.reports": "Berichte",
+}
+
+PERMISSION_LABELS = {
+    "read": "Lesen",
+    "write": "Bearbeiten",
+    "delete": "Löschen",
+}
+
 PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
     "crm": {
         "contacts": ["read", "write", "delete"],

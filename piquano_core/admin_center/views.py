@@ -11,9 +11,22 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from .defaults import APP_LABELS, MODULE_LABELS, PERMISSION_LABELS
 from .models import FeatureToggle, Permission, UserPermission
 
 User = get_user_model()
+
+
+def _app_label(key):
+    return APP_LABELS.get(key, key)
+
+
+def _module_label(app, module):
+    return MODULE_LABELS.get(f"{app}.{module}", module)
+
+
+def _perm_label(codename):
+    return PERMISSION_LABELS.get(codename, codename)
 
 
 def _staff_required(view_func):
@@ -56,10 +69,12 @@ def dashboard(request):
 def toggle_list(request):
     """Alle Feature-Toggles, gruppiert nach app_label."""
     toggles = FeatureToggle.objects.all()
-    grouped: dict[str, list[FeatureToggle]] = defaultdict(list)
+    grouped: dict[str, dict] = {}
     for t in toggles:
-        grouped[t.app_label].append(t)
-    # Sort keys for consistent ordering
+        if t.app_label not in grouped:
+            grouped[t.app_label] = {"label": _app_label(t.app_label), "toggles": []}
+        t.display_name = _module_label(t.app_label, t.module_name)
+        grouped[t.app_label]["toggles"].append(t)
     grouped_sorted = dict(sorted(grouped.items()))
     return render(
         request,
@@ -76,7 +91,8 @@ def toggle_switch(request, pk):
     toggle.is_enabled = not toggle.is_enabled
     toggle.save(update_fields=["is_enabled", "updated_at"])
     status = "aktiviert" if toggle.is_enabled else "deaktiviert"
-    messages.success(request, f"{toggle.app_label}.{toggle.module_name} {status}.")
+    label = _module_label(toggle.app_label, toggle.module_name)
+    messages.success(request, f"{label} ({_app_label(toggle.app_label)}) {status}.")
     return redirect("piquano_admin_center:toggles")
 
 
@@ -117,20 +133,27 @@ def user_permissions(request, user_id):
     )
 
     # Group by app_label > module_name
-    grouped: dict[str, dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
+    grouped: dict[str, dict] = {}
     for perm in permissions:
-        grouped[perm.app_label][perm.module_name].append(
+        if perm.app_label not in grouped:
+            grouped[perm.app_label] = {
+                "label": _app_label(perm.app_label),
+                "modules": defaultdict(list),
+            }
+        grouped[perm.app_label]["modules"][perm.module_name].append(
             {
                 "id": str(perm.id),
                 "codename": perm.codename,
-                "description": perm.description,
+                "codename_label": _perm_label(perm.codename),
+                "module_label": _module_label(perm.app_label, perm.module_name),
                 "granted": perm.id in granted_ids,
             }
         )
 
     # Sort for consistent rendering
     grouped_sorted = {
-        app: dict(sorted(modules.items())) for app, modules in sorted(grouped.items())
+        app: {"label": data["label"], "modules": dict(sorted(data["modules"].items()))}
+        for app, data in sorted(grouped.items())
     }
 
     return render(
