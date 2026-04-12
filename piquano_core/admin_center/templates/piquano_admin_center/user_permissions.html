@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ target_user.get_full_name }} -- Berechtigungen{% endblock %}
+
+{% block content %}
+<style>
+.perm-matrix-section { margin-bottom:24px; }
+.perm-matrix-app { font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:#133447; padding:10px 16px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; justify-content:space-between; }
+.perm-matrix-row { display:flex; align-items:center; padding:10px 16px; border-bottom:1px solid #f1f5f9; }
+.perm-matrix-row:last-child { border-bottom:none; }
+.perm-module { width:200px; font-weight:600; font-size:14px; color:#334155; flex-shrink:0; }
+.perm-checks { display:flex; gap:20px; flex:1; }
+.perm-check-item { display:flex; align-items:center; gap:6px; font-size:13px; color:#64748b; }
+.perm-check-item input[type="checkbox"] { width:16px; height:16px; accent-color:#328cc1; cursor:pointer; }
+.select-all-label { font-size:12px; color:#64748b; display:flex; align-items:center; gap:6px; cursor:pointer; }
+.select-all-label input { width:14px; height:14px; accent-color:#328cc1; cursor:pointer; }
+</style>
+
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
+    <div>
+        <h1>Berechtigungen: {{ target_user.get_full_name|default:target_user.username }}</h1>
+        <p style="color:#64748b; margin-top:4px;">{{ target_user.email }}</p>
+    </div>
+    <a href="{% url 'piquano_admin_center:permissions' %}" class="btn btn-secondary">Zurueck</a>
+</div>
+
+<form method="post" action="{% url 'piquano_admin_center:save_permissions' target_user.id %}">
+    {% csrf_token %}
+
+    {% for app_label, modules in grouped_permissions.items %}
+    <div class="card perm-matrix-section">
+        <div class="perm-matrix-app">
+            <span>{{ app_label }}</span>
+            <label class="select-all-label">
+                <input type="checkbox" class="select-all-app" data-app="{{ app_label }}" onchange="toggleAppPerms(this)">
+                Alle auswaehlen
+            </label>
+        </div>
+        <div class="card-body" style="padding:0;">
+            {% for module_name, perms in modules.items %}
+            <div class="perm-matrix-row">
+                <div class="perm-module">{{ module_name }}</div>
+                <div class="perm-checks">
+                    {% for perm in perms %}
+                    <label class="perm-check-item">
+                        <input type="checkbox"
+                               name="permissions"
+                               value="{{ perm.id }}"
+                               class="perm-cb app-{{ app_label }}"
+                               {% if perm.granted %}checked{% endif %}>
+                        {{ perm.codename }}
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <div style="display:flex; gap:12px; margin-top:16px;">
+        <button type="submit" class="btn btn-primary">Speichern</button>
+        <a href="{% url 'piquano_admin_center:permissions' %}" class="btn btn-secondary">Abbrechen</a>
+    </div>
+</form>
+
+<script>
+function toggleAppPerms(cb) {
+    var app = cb.dataset.app;
+    var boxes = document.querySelectorAll('.app-' + app);
+    for (var i = 0; i < boxes.length; i++) {
+        boxes[i].checked = cb.checked;
+    }
+}
+// Sync "select all" checkbox state on page load
+document.querySelectorAll('.select-all-app').forEach(function(cb) {
+    var app = cb.dataset.app;
+    var boxes = document.querySelectorAll('.app-' + app);
+    var allChecked = true;
+    boxes.forEach(function(b) { if (!b.checked) allChecked = false; });
+    cb.checked = allChecked && boxes.length > 0;
+});
+</script>
+{% endblock %}

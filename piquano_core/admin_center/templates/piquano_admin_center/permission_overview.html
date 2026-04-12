@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Berechtigungen -- Admin-Center{% endblock %}
+
+{% block content %}
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
+    <h1>Berechtigungen</h1>
+    <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn btn-secondary">Zurueck</a>
+</div>
+
+<div class="card">
+    <div class="card-body" style="padding:0;">
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Benutzername</th>
+                    <th>Name</th>
+                    <th>E-Mail</th>
+                    <th style="text-align:center;">Berechtigungen</th>
+                    <th style="text-align:right;">Aktion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in user_data %}
+                <tr>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.full_name }}</td>
+                    <td>{{ u.email }}</td>
+                    <td style="text-align:center;">
+                        {% if u.perm_count > 0 %}
+                        <span class="badge badge-green">{{ u.perm_count }}</span>
+                        {% else %}
+                        <span class="badge badge-gray">0</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        <a href="{% url 'piquano_admin_center:user_permissions' u.id %}" class="btn btn-primary btn-sm">Bearbeiten</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Admin-Center -- Piquano{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Admin-Center</h1>
+</div>
+
+<div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:20px; margin-bottom:32px;">
+    <!-- Feature-Toggles KPI -->
+    <div class="card">
+        <div class="card-body" style="text-align:center; padding:24px;">
+            <div style="font-size:36px; font-weight:700; color:#133447;">{{ toggles_active }}<span style="font-size:18px; color:#64748b;"> / {{ toggles_total }}</span></div>
+            <div style="margin-top:8px; color:#64748b; font-size:14px;">Feature-Toggles aktiv</div>
+            <div style="margin-top:12px;">
+                <span class="badge badge-green">{{ toggles_active }} aktiv</span>
+                <span class="badge badge-gray">{{ toggles_inactive }} inaktiv</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Permissions KPI -->
+    <div class="card">
+        <div class="card-body" style="text-align:center; padding:24px;">
+            <div style="font-size:36px; font-weight:700; color:#133447;">{{ permissions_total }}</div>
+            <div style="margin-top:8px; color:#64748b; font-size:14px;">Berechtigungen definiert</div>
+        </div>
+    </div>
+
+    <!-- Users with Permissions KPI -->
+    <div class="card">
+        <div class="card-body" style="text-align:center; padding:24px;">
+            <div style="font-size:36px; font-weight:700; color:#133447;">{{ users_with_perms }}</div>
+            <div style="margin-top:8px; color:#64748b; font-size:14px;">Benutzer mit Berechtigungen</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h2>Quick-Links</h2></div>
+    <div class="card-body">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <a href="{% url 'piquano_admin_center:toggles' %}" class="btn btn-primary">Feature-Toggles verwalten</a>
+            <a href="{% url 'piquano_admin_center:permissions' %}" class="btn btn-secondary">Berechtigungen verwalten</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
