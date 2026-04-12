@@ -7,10 +7,12 @@ Usage:
     python manage.py ms365_backfill --days 30 --dry-run
 """
 
+from __future__ import annotations
+
 from django.core.management.base import BaseCommand
 
 from piquano_core.ms365.graph import TokenInvalidError
-from piquano_core.ms365.models import MailAccount
+from piquano_core.ms365.management.commands.ms365_sync import _get_accounts
 from piquano_core.ms365.sync import run_full_sync
 
 
@@ -24,14 +26,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         days = options["days"]
-        accounts = MailAccount.objects.filter(status="connected")
-        if options["account"]:
-            q = options["account"]
-            accounts = accounts.filter(upn__icontains=q) | accounts.filter(
-                user__username__icontains=q
-            )
-
-        if not accounts.exists():
+        accounts = _get_accounts(options["account"])
+        if not accounts:
             self.stdout.write(self.style.WARNING("Keine verbundenen Accounts gefunden."))
             return
 
@@ -44,15 +40,14 @@ class Command(BaseCommand):
                     account,
                     backfill_days=days,
                     dry_run=options["dry_run"],
-                    full_resync=True,  # Delta-Links ignorieren
+                    full_resync=True,
                 )
                 total_new = sum(r.persisted_new for r in results.values())
                 total_fetched = sum(r.fetched for r in results.values())
                 total_matched = sum(r.matched for r in results.values())
 
                 self.stdout.write(
-                    f"  {prefix}Gelesen: {total_fetched}, Gematcht: {total_matched}, "
-                    f"Neu: {total_new}"
+                    f"  {prefix}Gelesen: {total_fetched}, Gematcht: {total_matched}, Neu: {total_new}"
                 )
                 for folder, r in results.items():
                     self.stdout.write(

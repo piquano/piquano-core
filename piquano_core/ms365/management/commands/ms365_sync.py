@@ -1,6 +1,10 @@
 """
 Management-Command: Synchronisiert MS365-Mails für alle verbundenen Accounts.
 
+Funktioniert in zwei Modi:
+- CRM (hat ms365 in INSTALLED_APPS): liest MailAccount aus eigener DB
+- Alle anderen Apps: liest MailAccount aus CRM-DB via Bridge
+
 Usage:
     python manage.py ms365_sync
     python manage.py ms365_sync --account usunkel@piquano.com
@@ -8,11 +12,35 @@ Usage:
     python manage.py ms365_sync --full-resync --backfill-days 30
 """
 
+from __future__ import annotations
+
+from django.apps import apps
 from django.core.management.base import BaseCommand
 
 from piquano_core.ms365.graph import TokenInvalidError
-from piquano_core.ms365.models import MailAccount
 from piquano_core.ms365.sync import run_full_sync
+
+
+def _get_accounts(account_filter: str | None = None):
+    """Liefert Accounts — aus ORM oder Bridge, je nach App-Setup."""
+    if apps.is_installed("piquano_ms365") or apps.is_installed("ms365"):
+        try:
+            from piquano_core.ms365.models import MailAccount
+        except Exception:
+            from ms365.models import MailAccount
+        qs = MailAccount.objects.filter(status="connected")
+        if account_filter:
+            qs = qs.filter(upn__icontains=account_filter) | qs.filter(
+                user__username__icontains=account_filter
+            )
+        return list(qs.distinct())
+    else:
+        from piquano_core.ms365.bridge import get_connected_accounts
+
+        accounts = get_connected_accounts()
+        if account_filter:
+            accounts = [a for a in accounts if account_filter.lower() in a.upn.lower()]
+        return accounts
 
 
 class Command(BaseCommand):
@@ -22,7 +50,9 @@ class Command(BaseCommand):
         parser.add_argument("--account", help="UPN oder Username (Substring-Match)")
         parser.add_argument("--dry-run", action="store_true")
         parser.add_argument(
-            "--full-resync", action="store_true", help="Delta-Links ignorieren, komplett neu syncen"
+            "--full-resync",
+            action="store_true",
+            help="Delta-Links ignorieren, komplett neu syncen",
         )
         parser.add_argument(
             "--backfill-days",
@@ -32,14 +62,8 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        accounts = MailAccount.objects.filter(status="connected")
-        if options["account"]:
-            q = options["account"]
-            accounts = accounts.filter(upn__icontains=q) | accounts.filter(
-                user__username__icontains=q
-            )
-
-        if not accounts.exists():
+        accounts = _get_accounts(options["account"])
+        if not accounts:
             self.stdout.write(self.style.WARNING("Keine verbundenen Accounts gefunden."))
             return
 
@@ -62,4 +86,3 @@ class Command(BaseCommand):
                         self.stdout.write(f"    → {s}")
             except TokenInvalidError as exc:
                 self.stderr.write(self.style.ERROR(f"  Token ungültig: {exc}"))
-                self.stderr.write("  → User muss sich unter /ms365/connect/ neu verbinden.")

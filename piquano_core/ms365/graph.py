@@ -1,15 +1,20 @@
-"""Microsoft-Graph-Client für einen einzelnen MailAccount."""
+"""
+Microsoft-Graph-Client für einen MailAccount.
+
+Funktioniert sowohl mit dem Django-Model MailAccount (CRM)
+als auch mit RemoteMailAccount (alle anderen Apps via Bridge).
+"""
+
+from __future__ import annotations
 
 import logging
 from datetime import timedelta
 
 import requests
-from django.db import transaction
 from django.utils import timezone
 
 from . import oauth
 from .crypto import decrypt, encrypt
-from .models import MailAccount
 
 logger = logging.getLogger(__name__)
 
@@ -24,8 +29,24 @@ class TokenInvalidError(GraphError):
     """Refresh-Token unbrauchbar — User muss neu verbinden."""
 
 
+def _update_account(account, updates: dict) -> None:
+    """Schreibt Updates entweder via ORM (MailAccount) oder via Bridge (RemoteMailAccount)."""
+    from .bridge import RemoteMailAccount, update_account_field
+
+    if isinstance(account, RemoteMailAccount):
+        update_account_field(account.pk, **updates)
+    else:
+        # Django ORM
+        from django.db import transaction
+
+        with transaction.atomic():
+            type(account).objects.filter(pk=account.pk).update(**updates)
+    for k, v in updates.items():
+        setattr(account, k, v)
+
+
 class GraphClient:
-    def __init__(self, account: MailAccount):
+    def __init__(self, account):
         self.account = account
 
     def _need_refresh(self) -> bool:
@@ -42,29 +63,22 @@ class GraphClient:
         try:
             result = oauth.refresh_access_token(refresh_token)
         except RuntimeError as exc:
-            with transaction.atomic():
-                MailAccount.objects.filter(pk=self.account.pk).update(
-                    status="needs_reauth",
-                    last_sync_error=str(exc),
-                )
+            _update_account(self.account, {"status": "needs_reauth", "last_sync_error": str(exc)})
             raise TokenInvalidError(str(exc)) from exc
 
         access_token = result["access_token"]
         expires_in = int(result.get("expires_in", 3600))
         new_refresh = result.get("refresh_token")
 
-        with transaction.atomic():
-            updates = {
-                "access_token_cache": access_token,
-                "access_token_expires_at": timezone.now() + timedelta(seconds=expires_in),
-                "status": "connected",
-                "last_sync_error": "",
-            }
-            if new_refresh:
-                updates["refresh_token_enc"] = encrypt(new_refresh)
-            MailAccount.objects.filter(pk=self.account.pk).update(**updates)
-            for k, v in updates.items():
-                setattr(self.account, k, v)
+        updates = {
+            "access_token_cache": access_token,
+            "access_token_expires_at": timezone.now() + timedelta(seconds=expires_in),
+            "status": "connected",
+            "last_sync_error": "",
+        }
+        if new_refresh:
+            updates["refresh_token_enc"] = encrypt(new_refresh)
+        _update_account(self.account, updates)
         return access_token
 
     def access_token(self) -> str:

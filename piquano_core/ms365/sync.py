@@ -10,12 +10,10 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.db import transaction
 from django.utils import timezone
 from django.utils.module_loading import import_string
 
 from .graph import GraphClient, GraphError, TokenInvalidError
-from .models import MailAccount
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +112,7 @@ def _process_page(*, account, folder, page, result, client, adapter, dry_run):
 
 
 def run_folder_sync(
-    account: MailAccount,
+    account,
     folder: str = "Inbox",
     *,
     backfill_days: int = DEFAULT_BACKFILL_DAYS,
@@ -159,19 +157,18 @@ def run_folder_sync(
         raise
 
     if not dry_run:
-        with transaction.atomic():
-            updates = {"last_sync_at": timezone.now(), "last_sync_error": ""}
-            if final_delta_link:
-                updates[delta_field] = final_delta_link
-            MailAccount.objects.filter(pk=account.pk).update(**updates)
-            for k, v in updates.items():
-                setattr(account, k, v)
+        from .graph import _update_account
+
+        updates = {"last_sync_at": timezone.now(), "last_sync_error": ""}
+        if final_delta_link:
+            updates[delta_field] = final_delta_link
+        _update_account(account, updates)
 
     return result
 
 
 def run_full_sync(
-    account: MailAccount,
+    account,
     *,
     backfill_days: int = DEFAULT_BACKFILL_DAYS,
     dry_run: bool = False,
@@ -234,8 +231,8 @@ def run_full_sync(
             )
 
     if error_message and not results:
-        MailAccount.objects.filter(pk=account.pk).update(
-            last_sync_error=error_message[:1000],
-        )
+        from .graph import _update_account
+
+        _update_account(account, {"last_sync_error": error_message[:1000]})
 
     return results
