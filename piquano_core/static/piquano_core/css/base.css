@@ -169,6 +169,49 @@ a:hover { text-decoration: underline; }
 .pq-pill--danger  { background: #fee4e2; color: var(--piquano-danger); }
 .pq-pill--info    { background: #e0f2fe; color: var(--piquano-info); }
 
+/* App-Switcher (Topbar Quicklinks) */
+.app-switcher {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+.app-switcher__link {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--piquano-text-muted);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.app-switcher__link:hover {
+  background: rgba(19, 52, 71, 0.08);
+  text-decoration: none;
+  color: var(--piquano-text);
+}
+.app-switcher__link.is-active {
+  background: var(--piquano-primary);
+  color: #fff;
+}
+.app-switcher__link.is-active:hover {
+  background: var(--piquano-primary);
+  color: #fff;
+}
+
+@media (max-width: 768px) {
+  .app-switcher__link {
+    width: 32px; height: 32px; padding: 0;
+    border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+  .app-switcher__link .app-switcher__full { display: none; }
+  .app-switcher__link .app-switcher__short { display: inline; }
+}
+@media (min-width: 769px) {
+  .app-switcher__link .app-switcher__short { display: none; }
+}
+
 /* ============================================================
    Responsive: Sidebar-Toggle + Mobile Layout
    Shared across all Piquano apps (CRM, ATS, App, Ticket, LMS).
