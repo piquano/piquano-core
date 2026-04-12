@@ -5,9 +5,9 @@ from django.conf import settings
 
 
 def _fernet():
-    key = getattr(settings, 'MS365_TOKEN_ENCRYPTION_KEY', '')
+    key = getattr(settings, "MS365_TOKEN_ENCRYPTION_KEY", "")
     if not key:
-        raise ValueError('MS365_TOKEN_ENCRYPTION_KEY ist nicht konfiguriert.')
+        raise ValueError("MS365_TOKEN_ENCRYPTION_KEY ist nicht konfiguriert.")
     return Fernet(key.encode() if isinstance(key, str) else key)
 
 

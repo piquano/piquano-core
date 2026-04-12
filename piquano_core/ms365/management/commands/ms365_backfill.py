@@ -15,33 +15,35 @@ from piquano_core.ms365.sync import run_full_sync
 
 
 class Command(BaseCommand):
-    help = 'Backfill: importiert die letzten N Tage E-Mails für alle verbundenen Accounts.'
+    help = "Backfill: importiert die letzten N Tage E-Mails für alle verbundenen Accounts."
 
     def add_arguments(self, parser):
-        parser.add_argument('--days', type=int, default=30, help='Tage zurück (default: 30)')
-        parser.add_argument('--account', help='UPN oder Username (Substring-Match)')
-        parser.add_argument('--dry-run', action='store_true')
+        parser.add_argument("--days", type=int, default=30, help="Tage zurück (default: 30)")
+        parser.add_argument("--account", help="UPN oder Username (Substring-Match)")
+        parser.add_argument("--dry-run", action="store_true")
 
     def handle(self, *args, **options):
-        days = options['days']
-        accounts = MailAccount.objects.filter(status='connected')
-        if options['account']:
-            q = options['account']
-            accounts = accounts.filter(upn__icontains=q) | accounts.filter(user__username__icontains=q)
+        days = options["days"]
+        accounts = MailAccount.objects.filter(status="connected")
+        if options["account"]:
+            q = options["account"]
+            accounts = accounts.filter(upn__icontains=q) | accounts.filter(
+                user__username__icontains=q
+            )
 
         if not accounts.exists():
-            self.stdout.write(self.style.WARNING('Keine verbundenen Accounts gefunden.'))
+            self.stdout.write(self.style.WARNING("Keine verbundenen Accounts gefunden."))
             return
 
-        prefix = '[DRY-RUN] ' if options['dry_run'] else ''
+        prefix = "[DRY-RUN] " if options["dry_run"] else ""
 
         for account in accounts:
-            self.stdout.write(f'\n{prefix}Backfill {days} Tage: {account.upn}')
+            self.stdout.write(f"\n{prefix}Backfill {days} Tage: {account.upn}")
             try:
                 results = run_full_sync(
                     account,
                     backfill_days=days,
-                    dry_run=options['dry_run'],
+                    dry_run=options["dry_run"],
                     full_resync=True,  # Delta-Links ignorieren
                 )
                 total_new = sum(r.persisted_new for r in results.values())
@@ -49,13 +51,13 @@ class Command(BaseCommand):
                 total_matched = sum(r.matched for r in results.values())
 
                 self.stdout.write(
-                    f'  {prefix}Gelesen: {total_fetched}, Gematcht: {total_matched}, '
-                    f'Neu: {total_new}'
+                    f"  {prefix}Gelesen: {total_fetched}, Gematcht: {total_matched}, "
+                    f"Neu: {total_new}"
                 )
                 for folder, r in results.items():
                     self.stdout.write(
-                        f'  {folder}: {r.fetched} gelesen, {r.persisted_new} neu, '
-                        f'{r.skipped_no_match} übersprungen'
+                        f"  {folder}: {r.fetched} gelesen, {r.persisted_new} neu, "
+                        f"{r.skipped_no_match} übersprungen"
                     )
             except TokenInvalidError as exc:
-                self.stderr.write(self.style.ERROR(f'  Token ungültig: {exc}'))
+                self.stderr.write(self.style.ERROR(f"  Token ungültig: {exc}"))

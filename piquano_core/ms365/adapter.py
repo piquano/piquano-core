@@ -10,7 +10,6 @@ from abc import ABC, abstractmethod
 
 
 class Ms365SyncAdapter(ABC):
-
     @abstractmethod
     def match_message(self, msg: dict, user_email: str) -> tuple[bool, list]:
         """
@@ -20,7 +19,9 @@ class Ms365SyncAdapter(ABC):
         ...
 
     @abstractmethod
-    def persist_message(self, *, account, msg, folder, matched_entities, client, dry_run) -> tuple[bool, bool]:
+    def persist_message(
+        self, *, account, msg, folder, matched_entities, client, dry_run
+    ) -> tuple[bool, bool]:
         """
         Persistiert eine gematchte Mail im app-eigenen Model.
         Returns (created, updated).

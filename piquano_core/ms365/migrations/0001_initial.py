@@ -8,7 +8,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -17,63 +16,152 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='MailAccount',
+            name="MailAccount",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('upn', models.EmailField(max_length=255, verbose_name='User Principal Name')),
-                ('tenant_id', models.CharField(blank=True, max_length=64, verbose_name='Tenant-ID')),
-                ('refresh_token_enc', models.TextField(blank=True, verbose_name='Refresh-Token (verschlüsselt)')),
-                ('access_token_cache', models.TextField(blank=True, verbose_name='Access-Token (Cache)')),
-                ('access_token_expires_at', models.DateTimeField(blank=True, null=True, verbose_name='Access-Token gültig bis')),
-                ('inbox_delta_link', models.TextField(blank=True, verbose_name='Inbox Delta-Link')),
-                ('sent_delta_link', models.TextField(blank=True, verbose_name='SentItems Delta-Link')),
-                ('last_sync_at', models.DateTimeField(blank=True, null=True, verbose_name='Letzter Sync')),
-                ('last_sync_error', models.TextField(blank=True, verbose_name='Letzter Sync-Fehler')),
-                ('status', models.CharField(choices=[('connected', 'Verbunden'), ('needs_reauth', 'Neu verbinden nötig'), ('revoked', 'Entzogen'), ('error', 'Fehler')], default='connected', max_length=20, verbose_name='Status')),
-                ('connected_at', models.DateTimeField(auto_now_add=True, verbose_name='Verbunden am')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Aktualisiert')),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='mail_account', to=settings.AUTH_USER_MODEL, verbose_name='User')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("upn", models.EmailField(max_length=255, verbose_name="User Principal Name")),
+                (
+                    "tenant_id",
+                    models.CharField(blank=True, max_length=64, verbose_name="Tenant-ID"),
+                ),
+                (
+                    "refresh_token_enc",
+                    models.TextField(blank=True, verbose_name="Refresh-Token (verschlüsselt)"),
+                ),
+                (
+                    "access_token_cache",
+                    models.TextField(blank=True, verbose_name="Access-Token (Cache)"),
+                ),
+                (
+                    "access_token_expires_at",
+                    models.DateTimeField(
+                        blank=True, null=True, verbose_name="Access-Token gültig bis"
+                    ),
+                ),
+                ("inbox_delta_link", models.TextField(blank=True, verbose_name="Inbox Delta-Link")),
+                (
+                    "sent_delta_link",
+                    models.TextField(blank=True, verbose_name="SentItems Delta-Link"),
+                ),
+                (
+                    "last_sync_at",
+                    models.DateTimeField(blank=True, null=True, verbose_name="Letzter Sync"),
+                ),
+                (
+                    "last_sync_error",
+                    models.TextField(blank=True, verbose_name="Letzter Sync-Fehler"),
+                ),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("connected", "Verbunden"),
+                            ("needs_reauth", "Neu verbinden nötig"),
+                            ("revoked", "Entzogen"),
+                            ("error", "Fehler"),
+                        ],
+                        default="connected",
+                        max_length=20,
+                        verbose_name="Status",
+                    ),
+                ),
+                (
+                    "connected_at",
+                    models.DateTimeField(auto_now_add=True, verbose_name="Verbunden am"),
+                ),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="Aktualisiert")),
+                (
+                    "user",
+                    models.OneToOneField(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="mail_account",
+                        to=settings.AUTH_USER_MODEL,
+                        verbose_name="User",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Mail-Account',
-                'verbose_name_plural': 'Mail-Accounts',
-                'db_table': 'ms365_mailaccount',
-                'ordering': ['-connected_at'],
+                "verbose_name": "Mail-Account",
+                "verbose_name_plural": "Mail-Accounts",
+                "db_table": "ms365_mailaccount",
+                "ordering": ["-connected_at"],
             },
         ),
         migrations.CreateModel(
-            name='MailSubscription',
+            name="MailSubscription",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
-                ('resource', models.CharField(max_length=200, verbose_name='Resource')),
-                ('graph_subscription_id', models.CharField(max_length=100, unique=True, verbose_name='Graph-Subscription-ID')),
-                ('client_state', models.CharField(max_length=100, verbose_name='Client-State')),
-                ('expires_at', models.DateTimeField(verbose_name='Läuft ab')),
-                ('last_renewed_at', models.DateTimeField(auto_now=True, verbose_name='Zuletzt verlängert')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')),
-                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='subscriptions', to='piquano_ms365.mailaccount', verbose_name='Account')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, editable=False, primary_key=True, serialize=False
+                    ),
+                ),
+                ("resource", models.CharField(max_length=200, verbose_name="Resource")),
+                (
+                    "graph_subscription_id",
+                    models.CharField(
+                        max_length=100, unique=True, verbose_name="Graph-Subscription-ID"
+                    ),
+                ),
+                ("client_state", models.CharField(max_length=100, verbose_name="Client-State")),
+                ("expires_at", models.DateTimeField(verbose_name="Läuft ab")),
+                (
+                    "last_renewed_at",
+                    models.DateTimeField(auto_now=True, verbose_name="Zuletzt verlängert"),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")),
+                (
+                    "account",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="subscriptions",
+                        to="piquano_ms365.mailaccount",
+                        verbose_name="Account",
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'Mail-Subscription',
-                'verbose_name_plural': 'Mail-Subscriptions',
-                'db_table': 'ms365_mailsubscription',
-                'ordering': ['-created_at'],
-                'indexes': [models.Index(fields=['expires_at'], name='ms365_mails_expires_709207_idx')],
+                "verbose_name": "Mail-Subscription",
+                "verbose_name_plural": "Mail-Subscriptions",
+                "db_table": "ms365_mailsubscription",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(fields=["expires_at"], name="ms365_mails_expires_709207_idx")
+                ],
             },
         ),
         migrations.CreateModel(
-            name='OAuthFlowState',
+            name="OAuthFlowState",
             fields=[
-                ('state', models.CharField(max_length=128, primary_key=True, serialize=False, verbose_name='State')),
-                ('flow', models.JSONField(verbose_name='Flow-Dict')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Erstellt am')),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='piquano_ms365_oauth_flows', to=settings.AUTH_USER_MODEL)),
+                (
+                    "state",
+                    models.CharField(
+                        max_length=128, primary_key=True, serialize=False, verbose_name="State"
+                    ),
+                ),
+                ("flow", models.JSONField(verbose_name="Flow-Dict")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="Erstellt am")),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="piquano_ms365_oauth_flows",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'verbose_name': 'OAuth-Flow-State',
-                'verbose_name_plural': 'OAuth-Flow-States',
-                'db_table': 'ms365_oauthflowstate',
-                'indexes': [models.Index(fields=['created_at'], name='ms365_oauth_created_5b663c_idx')],
+                "verbose_name": "OAuth-Flow-State",
+                "verbose_name_plural": "OAuth-Flow-States",
+                "db_table": "ms365_oauthflowstate",
+                "indexes": [
+                    models.Index(fields=["created_at"], name="ms365_oauth_created_5b663c_idx")
+                ],
             },
         ),
     ]

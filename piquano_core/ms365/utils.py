@@ -10,14 +10,14 @@ def addresses_from_message(msg: dict) -> set[str]:
     def _add(entry):
         if not entry:
             return
-        ea = entry.get('emailAddress') or {}
-        addr = (ea.get('address') or '').strip().lower()
+        ea = entry.get("emailAddress") or {}
+        addr = (ea.get("address") or "").strip().lower()
         if addr:
             addrs.add(addr)
 
-    for key in ('from', 'sender'):
+    for key in ("from", "sender"):
         _add(msg.get(key))
-    for key in ('toRecipients', 'ccRecipients', 'bccRecipients', 'replyTo'):
+    for key in ("toRecipients", "ccRecipients", "bccRecipients", "replyTo"):
         for entry in msg.get(key) or []:
             _add(entry)
     return addrs
@@ -29,7 +29,7 @@ def parse_received(msg: dict, folder: str):
 
     from django.utils.dateparse import parse_datetime
 
-    raw = msg.get('receivedDateTime') if folder == 'Inbox' else msg.get('sentDateTime')
+    raw = msg.get("receivedDateTime") if folder == "Inbox" else msg.get("sentDateTime")
     if not raw:
         return None
     dt = parse_datetime(raw)
@@ -39,4 +39,4 @@ def parse_received(msg: dict, folder: str):
 
 
 def direction_for_folder(folder: str) -> str:
-    return 'in' if folder == 'Inbox' else 'out'
+    return "in" if folder == "Inbox" else "out"
