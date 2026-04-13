@@ -27,6 +27,8 @@ def require_permission(codename: str):
             if not request.user.is_authenticated:
                 login_url = getattr(settings, "LOGIN_URL", "/accounts/login/")
                 return redirect(f"{login_url}?next={request.path}")
+            if not hasattr(request.user, "has_piquano_perm"):
+                return view_func(request, *args, **kwargs)  # Middleware fehlt → fail-open
             if not request.user.has_piquano_perm(codename):
                 return HttpResponseForbidden("Keine Berechtigung")
             return view_func(request, *args, **kwargs)
@@ -45,6 +47,8 @@ def require_feature(app_label: str, module_name: str):
             if not request.user.is_authenticated:
                 login_url = getattr(settings, "LOGIN_URL", "/accounts/login/")
                 return redirect(f"{login_url}?next={request.path}")
+            if not hasattr(request.user, "is_feature_enabled"):
+                return view_func(request, *args, **kwargs)  # Middleware fehlt → fail-open
             if not request.user.is_feature_enabled(app_label, module_name):
                 return HttpResponseForbidden("Feature nicht verfuegbar")
             return view_func(request, *args, **kwargs)
