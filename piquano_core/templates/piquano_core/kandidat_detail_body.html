@@ -355,7 +355,7 @@
     <div class="card-header"><h2>Bewerbungen ({{ k_applications|length }})</h2></div>
     <div class="card-body" style="padding:0;">
         <table>
-            <thead><tr><th>Projekt</th><th>Stage</th><th>KI-Score</th><th>Beworben am</th></tr></thead>
+            <thead><tr><th>Projekt</th><th>Stage</th><th>KI-Score</th><th>Beworben am</th><th></th></tr></thead>
             <tbody>
                 {% for app in k_applications %}
                 <tr>
@@ -363,7 +363,22 @@
                     <td><span class="badge" style="background:{{ app.stage.color }}20; color:{{ app.stage.color }};">{{ app.stage.name }}</span></td>
                     <td>{% if app.ai_score %}<span class="badge {% if app.ai_score >= 70 %}badge-green{% elif app.ai_score >= 40 %}badge-yellow{% else %}badge-red{% endif %}">{{ app.ai_score }}/100</span>{% else %}—{% endif %}</td>
                     <td>{{ app.applied_at|date:"d.m.Y" }}</td>
+                    <td>{% if app.custom_fields.questionnaire %}<button type="button" onclick="this.closest('tr').nextElementSibling.classList.toggle('u-hidden')" class="btn btn-sm" style="padding:2px 8px; font-size:12px;">Fragen ▾</button>{% endif %}</td>
                 </tr>
+                {% if app.custom_fields.questionnaire %}
+                <tr class="u-hidden">
+                    <td colspan="5" style="padding:12px 16px; background:var(--piquano-bg-subtle, #f8f9fa);">
+                        <div style="display:grid; gap:10px; max-width:700px;">
+                            {% for qa in app.custom_fields.questionnaire %}
+                            <div>
+                                <div style="font-size:12px; font-weight:600; color:var(--piquano-text-muted, #6c757d); margin-bottom:2px;">{{ qa.question }}</div>
+                                <div style="font-size:14px;">{{ qa.answer|default:"—" }}</div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}
                 {% endfor %}
             </tbody>
         </table>
