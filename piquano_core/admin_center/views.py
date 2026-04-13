@@ -11,8 +11,15 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
+from django.conf import settings as django_settings
+
 from .defaults import APP_LABELS, MODULE_LABELS, PERMISSION_LABELS
 from .models import FeatureToggle, Permission, UserPermission
+
+
+def _get_own_app() -> str | None:
+    """Return the PIQUANO_APP_NAME from settings, or None if not set."""
+    return getattr(django_settings, "PIQUANO_ADMIN_CENTER_APP", None)
 
 User = get_user_model()
 
@@ -46,9 +53,12 @@ def _staff_required(view_func):
 @_staff_required
 def dashboard(request):
     """Uebersicht: KPIs und Quick-Links."""
-    toggles_total = FeatureToggle.objects.count()
-    toggles_active = FeatureToggle.objects.filter(is_enabled=True).count()
-    permissions_total = Permission.objects.count()
+    own_app = _get_own_app()
+    t_qs = FeatureToggle.objects.filter(app_label=own_app) if own_app else FeatureToggle.objects.all()
+    p_qs = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
+    toggles_total = t_qs.count()
+    toggles_active = t_qs.filter(is_enabled=True).count()
+    permissions_total = p_qs.count()
     users_with_perms = (
         UserPermission.objects.filter(is_granted=True).values("user").distinct().count()
     )
@@ -67,8 +77,9 @@ def dashboard(request):
 
 @_staff_required
 def toggle_list(request):
-    """Alle Feature-Toggles, gruppiert nach app_label."""
-    toggles = FeatureToggle.objects.all()
+    """Feature-Toggles der eigenen App, gruppiert nach app_label."""
+    own_app = _get_own_app()
+    toggles = FeatureToggle.objects.filter(app_label=own_app) if own_app else FeatureToggle.objects.all()
     grouped: dict[str, dict] = {}
     for t in toggles:
         if t.app_label not in grouped:
@@ -121,9 +132,10 @@ def permission_overview(request):
 
 @_staff_required
 def user_permissions(request, user_id):
-    """Matrix-View: alle Permissions als Checkboxen fuer einen User."""
+    """Matrix-View: Permissions der eigenen App als Checkboxen fuer einen User."""
     target_user = get_object_or_404(User, pk=user_id)
-    permissions = Permission.objects.all()
+    own_app = _get_own_app()
+    permissions = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
 
     # Current grants for this user
     granted_ids = set(
@@ -169,10 +181,11 @@ def user_permissions(request, user_id):
 @require_POST
 @_staff_required
 def save_user_permissions(request, user_id):
-    """Bulk-Update der UserPermission-Eintraege."""
+    """Bulk-Update der UserPermission-Eintraege (nur eigene App)."""
     target_user = get_object_or_404(User, pk=user_id)
     granted_perm_ids = set(request.POST.getlist("permissions"))
-    all_permissions = Permission.objects.all()
+    own_app = _get_own_app()
+    all_permissions = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
 
     for perm in all_permissions:
         should_grant = str(perm.id) in granted_perm_ids

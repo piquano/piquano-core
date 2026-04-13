@@ -32,8 +32,14 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        from django.conf import settings as django_settings
+
         registry = get_registry()
         app_filter = options["app"]
+
+        # Default to PIQUANO_APP_NAME if --app not given
+        if not app_filter:
+            app_filter = getattr(django_settings, "PIQUANO_ADMIN_CENTER_APP", None)
 
         if app_filter:
             if app_filter not in registry:
