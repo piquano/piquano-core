@@ -166,6 +166,17 @@ class ATSClient:
             cache_key=f"candidate:{candidate_id}",
         )
 
+    def get_candidate_by_public_id(self, public_id: str) -> dict:
+        """Fetch a single candidate by menschenlesbarer UID (z.B. A0000042)."""
+        uid = (public_id or "").strip().upper()
+        if not uid:
+            raise ATSClientError("public_id must be non-empty")
+        return self._request(
+            "GET",
+            f"api/v1/candidates/by-uid/{uid}/",
+            cache_key=f"candidate_uid:{uid}",
+        )
+
     def search_candidates(self, query: str, limit: int = 25) -> list[dict]:
         """Search candidates by name or email."""
         data = self._request(
