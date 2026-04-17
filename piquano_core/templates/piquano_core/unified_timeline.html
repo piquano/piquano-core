@@ -1,0 +1,1316 @@
+{# Piquano Unified Timeline — include in detail templates #}
+{# Context: timeline_entries, note_add_url, email_compose_url, activity_add_url, deal_add_url, contact_email, csrf_token #}
+
+{% load tz %}
+
+<div class="utl" id="unifiedTimeline">
+
+  {# ── Action Bar ── #}
+  <div class="utl-actionbar" id="utlActionBar">
+
+    {# Action Buttons #}
+    <div class="utl-actionbar__buttons" role="tablist" aria-label="Aktionen">
+      {% if note_add_url %}
+      <button type="button" class="utl-action-btn" role="tab" aria-selected="false"
+              data-panel="note" onclick="utlTogglePanel('note')"
+              aria-controls="utlPanelNote" id="utlBtnNote">
+        <svg class="utl-action-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        <span>Notiz</span>
+      </button>
+      {% endif %}
+      {% if email_compose_url %}
+      <button type="button" class="utl-action-btn" role="tab" aria-selected="false"
+              data-panel="email" onclick="utlTogglePanel('email')"
+              aria-controls="utlPanelEmail" id="utlBtnEmail">
+        <svg class="utl-action-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,7 12,13 2,7"/></svg>
+        <span>E-Mail</span>
+      </button>
+      {% endif %}
+      {% if activity_add_url %}
+      <button type="button" class="utl-action-btn" role="tab" aria-selected="false"
+              data-panel="activity" onclick="utlTogglePanel('activity')"
+              aria-controls="utlPanelActivity" id="utlBtnActivity">
+        <svg class="utl-action-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        <span>Aktivitaet</span>
+      </button>
+      {% endif %}
+      {% if deal_add_url %}
+      <button type="button" class="utl-action-btn" role="tab" aria-selected="false"
+              data-panel="deal" onclick="utlTogglePanel('deal')"
+              aria-controls="utlPanelDeal" id="utlBtnDeal">
+        <svg class="utl-action-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+        <span>Deal</span>
+      </button>
+      {% endif %}
+    </div>
+
+    {# ── Panel: Notiz ── #}
+    {% if note_add_url %}
+    <div class="utl-panel" id="utlPanelNote" role="tabpanel" aria-labelledby="utlBtnNote" hidden>
+      <form method="post" action="{{ note_add_url }}" class="utl-panel__form" id="utlNoteForm">
+        {% csrf_token %}
+        <div class="utl-compose__type-pills" role="radiogroup" aria-label="Notiz-Typ">
+          <button type="button" class="utl-pill utl-pill--active" data-value="general" onclick="utlSelectPill(this)">Allgemein</button>
+          <button type="button" class="utl-pill" data-value="interview" onclick="utlSelectPill(this)">Interview</button>
+          <button type="button" class="utl-pill" data-value="internal" onclick="utlSelectPill(this)">Intern</button>
+          <button type="button" class="utl-pill" data-value="feedback" onclick="utlSelectPill(this)">Feedback</button>
+        </div>
+        <input type="hidden" name="note_type" id="utlNoteType" value="general">
+        <textarea name="note_text" id="utlNoteText" class="utl-input utl-input--textarea" rows="3"
+                  placeholder="Notiz schreiben..." aria-label="Notiz-Text"></textarea>
+        <div class="utl-panel__actions">
+          <button type="button" class="utl-btn utl-btn--ghost" onclick="utlClosePanel()">Abbrechen</button>
+          <button type="submit" class="utl-btn utl-btn--primary" id="utlNoteSubmit" disabled>Speichern</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {# ── Panel: E-Mail ── #}
+    {% if email_compose_url %}
+    <div class="utl-panel" id="utlPanelEmail" role="tabpanel" aria-labelledby="utlBtnEmail" hidden>
+      <form method="post" action="{{ email_compose_url }}" class="utl-panel__form" id="utlEmailForm">
+        {% csrf_token %}
+        <div class="utl-panel__fields">
+          <div class="utl-field">
+            <label class="utl-field__label" for="utlEmailTo">An</label>
+            <input type="email" name="to" id="utlEmailTo" class="utl-input"
+                   value="{{ contact_email|default:'' }}" placeholder="empfaenger@beispiel.de" required>
+          </div>
+          <div class="utl-field">
+            <label class="utl-field__label" for="utlEmailSubject">Betreff</label>
+            <input type="text" name="subject" id="utlEmailSubject" class="utl-input"
+                   placeholder="Betreff eingeben..." required>
+          </div>
+          <div class="utl-field">
+            <label class="utl-field__label" for="utlEmailBody">Nachricht</label>
+            <textarea name="body" id="utlEmailBody" class="utl-input utl-input--textarea" rows="4"
+                      placeholder="Nachricht verfassen..." required></textarea>
+          </div>
+        </div>
+        <div class="utl-panel__actions">
+          <button type="button" class="utl-btn utl-btn--ghost" onclick="utlClosePanel()">Abbrechen</button>
+          <button type="submit" class="utl-btn utl-btn--primary" id="utlEmailSubmit">Senden</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {# ── Panel: Aktivitaet ── #}
+    {% if activity_add_url %}
+    <div class="utl-panel" id="utlPanelActivity" role="tabpanel" aria-labelledby="utlBtnActivity" hidden>
+      <form method="post" action="{{ activity_add_url }}" class="utl-panel__form" id="utlActivityForm">
+        {% csrf_token %}
+        <div class="utl-panel__fields">
+          <div class="utl-field-row">
+            <div class="utl-field utl-field--half">
+              <label class="utl-field__label" for="utlActivityType">Typ</label>
+              <select name="activity_type" id="utlActivityType" class="utl-input utl-input--select" required>
+                <option value="call">Anruf</option>
+                <option value="meeting">Meeting</option>
+                <option value="task">Aufgabe</option>
+              </select>
+            </div>
+            <div class="utl-field utl-field--half">
+              <label class="utl-field__label" for="utlActivityDue">Faellig am</label>
+              <input type="date" name="due_date" id="utlActivityDue" class="utl-input">
+            </div>
+          </div>
+          <div class="utl-field">
+            <label class="utl-field__label" for="utlActivitySubject">Betreff</label>
+            <input type="text" name="subject" id="utlActivitySubject" class="utl-input"
+                   placeholder="Betreff eingeben..." required>
+          </div>
+          <div class="utl-field">
+            <label class="utl-field__label" for="utlActivityNotes">Notizen</label>
+            <textarea name="notes" id="utlActivityNotes" class="utl-input utl-input--textarea" rows="2"
+                      placeholder="Optionale Notizen..."></textarea>
+          </div>
+        </div>
+        <div class="utl-panel__actions">
+          <button type="button" class="utl-btn utl-btn--ghost" onclick="utlClosePanel()">Abbrechen</button>
+          <button type="submit" class="utl-btn utl-btn--primary">Anlegen</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+    {# ── Panel: Deal ── #}
+    {% if deal_add_url %}
+    <div class="utl-panel" id="utlPanelDeal" role="tabpanel" aria-labelledby="utlBtnDeal" hidden>
+      <form method="post" action="{{ deal_add_url }}" class="utl-panel__form" id="utlDealForm">
+        {% csrf_token %}
+        <div class="utl-panel__fields">
+          <div class="utl-field">
+            <label class="utl-field__label" for="utlDealTitle">Titel</label>
+            <input type="text" name="title" id="utlDealTitle" class="utl-input"
+                   placeholder="Deal-Bezeichnung..." required>
+          </div>
+          <div class="utl-field">
+            <label class="utl-field__label" for="utlDealValue">Wert</label>
+            <div class="utl-input-group">
+              <input type="number" name="value" id="utlDealValue" class="utl-input utl-input--currency"
+                     placeholder="0" min="0" step="0.01">
+              <span class="utl-input-group__suffix">EUR</span>
+            </div>
+          </div>
+        </div>
+        <div class="utl-panel__actions">
+          <button type="button" class="utl-btn utl-btn--ghost" onclick="utlClosePanel()">Abbrechen</button>
+          <button type="submit" class="utl-btn utl-btn--primary">Anlegen</button>
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {# ── Filter Tabs ── #}
+  <div class="utl-filters" role="tablist" aria-label="Timeline-Filter">
+    <button class="utl-tab utl-tab--active" role="tab" aria-selected="true"
+            data-filter="all" onclick="utlFilter(this,'all')">
+      Alle <span class="utl-tab__count" id="utlCountAll">0</span>
+    </button>
+    <button class="utl-tab" role="tab" aria-selected="false"
+            data-filter="note" onclick="utlFilter(this,'note')">
+      Notizen <span class="utl-tab__count" id="utlCountNote">0</span>
+    </button>
+    <button class="utl-tab" role="tab" aria-selected="false"
+            data-filter="email" onclick="utlFilter(this,'email')">
+      E-Mails <span class="utl-tab__count" id="utlCountEmail">0</span>
+    </button>
+    <button class="utl-tab" role="tab" aria-selected="false"
+            data-filter="activity" onclick="utlFilter(this,'activity')">
+      Aktivitaeten <span class="utl-tab__count" id="utlCountActivity">0</span>
+    </button>
+  </div>
+
+  {# ── Timeline Stream ── #}
+  <div class="utl-stream" id="utlStream">
+    {% regroup timeline_entries by date_group as grouped_entries %}
+    {% for group in grouped_entries %}
+    <div class="utl-date-group" data-group="{{ group.grouper }}">
+      <div class="utl-date-label">{{ group.grouper }}</div>
+      {% for entry in group.list %}
+      <div class="utl-entry utl-entry--{{ entry.type }}"
+           data-type="{{ entry.type }}"
+           data-date="{{ entry.date|date:'c' }}"
+           {% if entry.type == "email" %}data-expandable="true"{% endif %}>
+
+        {# Icon on the timeline line #}
+        <div class="utl-entry__icon utl-icon--{{ entry.type }}" aria-hidden="true">
+          {% if entry.type == "note" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          {% elif entry.type == "email" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><polyline points="22,7 12,13 2,7"/></svg>
+          {% elif entry.type == "call" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+          {% elif entry.type == "meeting" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          {% elif entry.type == "activity" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          {% elif entry.type == "audit" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          {% endif %}
+        </div>
+
+        {# Content card #}
+        <div class="utl-entry__body">
+          <div class="utl-entry__header">
+            <div class="utl-entry__meta">
+              <span class="utl-entry__type-label utl-type--{{ entry.type }}">
+                {% if entry.type == "note" %}Notiz{% elif entry.type == "email" %}E-Mail{% elif entry.type == "call" %}Anruf{% elif entry.type == "meeting" %}Meeting{% elif entry.type == "activity" %}Aktivitaet{% elif entry.type == "audit" %}Audit{% endif %}
+                {% if entry.extra.note_type %}
+                  <span class="utl-entry__subtype">{{ entry.extra.note_type }}</span>
+                {% endif %}
+              </span>
+              {% if entry.source %}
+              <span class="utl-source utl-source--{{ entry.source }}">{{ entry.source|upper }}</span>
+              {% endif %}
+            </div>
+            <div class="utl-entry__right">
+              <span class="utl-entry__author">{{ entry.author|default:"System" }}</span>
+              <time class="utl-entry__time" datetime="{{ entry.date|date:'c' }}"
+                    title="{{ entry.date|date:'d.m.Y H:i:s' }}">
+                {{ entry.date|timesince }} her
+              </time>
+            </div>
+          </div>
+
+          {% if entry.type == "email" %}
+          {# Email compact view #}
+          <div class="utl-email">
+            <div class="utl-email__row">
+              <span class="utl-email__direction utl-email__direction--{{ entry.direction|default:'outbound' }}"
+                    aria-label="{% if entry.direction == 'inbound' %}Eingehend{% else %}Ausgehend{% endif %}">
+                {% if entry.direction == "inbound" %}<svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M3.5 10L8 14.5 12.5 10H9V1.5H7V10H3.5z"/></svg>{% else %}<svg viewBox="0 0 16 16" fill="currentColor" width="14" height="14"><path d="M12.5 6L8 1.5 3.5 6H7V14.5h2V6h3.5z"/></svg>{% endif %}
+              </span>
+              <span class="utl-email__subject">{{ entry.subject|default:"(ohne Betreff)" }}</span>
+              {% if entry.status %}
+              <span class="utl-email__status utl-email__status--{{ entry.status }}">
+                {% if entry.status == "sent" %}Gesendet{% elif entry.status == "opened" %}Geoeffnet{% elif entry.status == "bounce" %}Bounce{% endif %}
+              </span>
+              {% endif %}
+            </div>
+            <div class="utl-email__preview">{{ entry.text|truncatewords:25 }}</div>
+            <button type="button" class="utl-email__expand" onclick="utlToggleEmail(this)"
+                    aria-expanded="false" aria-label="E-Mail aufklappen">
+              <span class="utl-email__expand-text">Vollstaendig anzeigen</span>
+              <svg class="utl-email__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="utl-email__full" aria-hidden="true">{{ entry.text|linebreaksbr }}</div>
+          </div>
+          {% else %}
+          {# Standard content #}
+          <div class="utl-entry__content">{{ entry.text|linebreaksbr }}</div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% empty %}
+    <div class="utl-empty" id="utlEmpty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="utl-empty__icon"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>Noch keine Eintraege vorhanden.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Load More ── #}
+  {% if timeline_has_more %}
+  <div class="utl-load-more" id="utlLoadMore">
+    <button type="button" class="utl-btn utl-btn--ghost utl-btn--full" onclick="utlLoadMore(this)"
+            data-url="{{ timeline_next_url }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right:6px;"><polyline points="6 9 12 15 18 9"/></svg>
+      Weitere Eintraege laden
+    </button>
+  </div>
+  {% endif %}
+
+  {# ── "No results" for filter ── #}
+  <div class="utl-empty utl-empty--filter" id="utlFilterEmpty" style="display:none;">
+    <p>Keine Eintraege fuer diesen Filter.</p>
+  </div>
+
+</div>
+
+<!-- Styles -->
+<style>
+/* ── Reset & Container ── */
+.utl {
+  --utl-line: var(--piquano-border, #e2e8f0);
+  --utl-note: var(--piquano-button, #328cc1);
+  --utl-email: #7c3aed;
+  --utl-call: #16a34a;
+  --utl-meeting: #f59e0b;
+  --utl-activity: #6b7280;
+  --utl-audit: #9ca3af;
+  --utl-radius: 8px;
+  --utl-radius-lg: 12px;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  position: relative;
+}
+
+/* ── Action Bar ── */
+.utl-actionbar {
+  margin-bottom: 20px;
+  background: var(--piquano-surface, #fff);
+  border: 1px solid var(--utl-line);
+  border-radius: var(--utl-radius-lg);
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.utl-actionbar:has(.utl-panel:not([hidden])) {
+  border-color: var(--piquano-button, #328cc1);
+  box-shadow: 0 0 0 3px rgba(50, 140, 193, 0.08);
+}
+.utl-actionbar__buttons {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid transparent;
+}
+.utl-actionbar:has(.utl-panel:not([hidden])) .utl-actionbar__buttons {
+  border-bottom-color: var(--utl-line);
+}
+
+/* Action Button */
+.utl-action-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--piquano-text-muted, #64748b);
+  background: transparent;
+  border: none;
+  padding: 12px 20px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.15s ease;
+  position: relative;
+  line-height: 1.4;
+  flex: 1;
+  justify-content: center;
+}
+.utl-action-btn:hover {
+  color: var(--piquano-text, #1e293b);
+  background: var(--piquano-bg, #f8fafc);
+}
+.utl-action-btn--active {
+  color: var(--piquano-button, #328cc1);
+  font-weight: 600;
+}
+.utl-action-btn--active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 16px;
+  right: 16px;
+  height: 2px;
+  background: var(--piquano-button, #328cc1);
+  border-radius: 2px 2px 0 0;
+}
+.utl-action-btn__icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+/* Separator between buttons */
+.utl-action-btn + .utl-action-btn {
+  border-left: 1px solid var(--utl-line);
+}
+
+/* ── Panel (expandable form area) ── */
+.utl-panel {
+  padding: 16px 20px 20px;
+  overflow: hidden;
+  animation: utlPanelIn 0.2s ease both;
+}
+.utl-panel[hidden] {
+  display: none;
+}
+@keyframes utlPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.utl-panel__form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.utl-panel__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.utl-panel__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Field layout */
+.utl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.utl-field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--piquano-text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.utl-field-row {
+  display: flex;
+  gap: 12px;
+}
+.utl-field--half {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Unified Input Styles ── */
+.utl-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--utl-line);
+  border-radius: var(--utl-radius);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--piquano-text, #1e293b);
+  background: var(--piquano-bg, #f8fafc);
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+}
+.utl-input:focus {
+  outline: none;
+  border-color: var(--piquano-button, #328cc1);
+  background: var(--piquano-surface, #fff);
+  box-shadow: 0 0 0 3px rgba(50, 140, 193, 0.08);
+}
+.utl-input::placeholder {
+  color: var(--piquano-text-muted, #94a3b8);
+}
+.utl-input--textarea {
+  min-height: 72px;
+  resize: vertical;
+  line-height: 1.6;
+}
+.utl-input--select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='4 6 8 10 12 6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
+}
+
+/* Input group (currency) */
+.utl-input-group {
+  display: flex;
+  align-items: stretch;
+}
+.utl-input-group .utl-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: none;
+}
+.utl-input-group__suffix {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--piquano-text-muted, #64748b);
+  background: var(--piquano-bg, #f1f5f9);
+  border: 1px solid var(--utl-line);
+  border-left: none;
+  border-radius: 0 var(--utl-radius) var(--utl-radius) 0;
+  white-space: nowrap;
+}
+
+/* ── Quick-Compose pills (reused from before) ── */
+.utl-compose__type-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.utl-pill {
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--utl-line);
+  background: var(--piquano-surface, #fff);
+  color: var(--piquano-text-muted, #64748b);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+.utl-pill:hover {
+  border-color: var(--piquano-button, #328cc1);
+  color: var(--piquano-button, #328cc1);
+}
+.utl-pill--active {
+  background: var(--piquano-button, #328cc1);
+  border-color: var(--piquano-button, #328cc1);
+  color: #fff;
+}
+.utl-pill--active:hover {
+  color: #fff;
+}
+
+/* ── Buttons ── */
+.utl-btn {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: var(--utl-radius);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+.utl-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.utl-btn--primary {
+  background: var(--piquano-button, #328cc1);
+  color: #fff;
+}
+.utl-btn--primary:hover:not(:disabled) {
+  background: var(--piquano-primary, #133447);
+}
+.utl-btn--ghost {
+  background: transparent;
+  color: var(--piquano-text-muted, #64748b);
+  border: 1px solid var(--utl-line);
+}
+.utl-btn--ghost:hover {
+  background: var(--piquano-bg, #f8fafc);
+  color: var(--piquano-text, #1e293b);
+}
+.utl-btn--full {
+  width: 100%;
+}
+
+/* ── Filter Tabs ── */
+.utl-filters {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--piquano-bg, #f8fafc);
+  border-radius: var(--utl-radius);
+  margin-bottom: 20px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.utl-tab {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--piquano-text-muted, #64748b);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  line-height: 1.4;
+}
+.utl-tab:hover {
+  color: var(--piquano-text, #1e293b);
+  background: rgba(0,0,0,0.04);
+}
+.utl-tab--active {
+  background: var(--piquano-surface, #fff);
+  color: var(--piquano-text, #1e293b);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.utl-tab__count {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--utl-line);
+  color: var(--piquano-text-muted, #64748b);
+  padding: 1px 7px;
+  border-radius: 10px;
+  min-width: 20px;
+  text-align: center;
+  line-height: 1.5;
+}
+.utl-tab--active .utl-tab__count {
+  background: var(--piquano-button, #328cc1);
+  color: #fff;
+}
+
+/* ── Timeline Stream ── */
+.utl-stream {
+  position: relative;
+  padding-left: 28px;
+}
+/* Vertical line */
+.utl-stream::before {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--utl-line);
+  border-radius: 1px;
+}
+
+/* ── Date Group ── */
+.utl-date-group {
+  margin-bottom: 4px;
+}
+.utl-date-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--piquano-text-muted, #64748b);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 0 8px 16px;
+  position: relative;
+}
+.utl-date-label::before {
+  content: '';
+  position: absolute;
+  left: -17px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--utl-line);
+  border: 2px solid var(--piquano-surface, #fff);
+  box-sizing: content-box;
+}
+
+/* ── Entry ── */
+.utl-entry {
+  display: flex;
+  gap: 12px;
+  padding: 6px 0;
+  position: relative;
+  transition: opacity 0.2s ease;
+}
+.utl-entry--hidden {
+  display: none;
+}
+
+/* Icon circle on the line */
+.utl-entry__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  left: -14px;
+  z-index: 1;
+  border: 2px solid var(--piquano-surface, #fff);
+  box-sizing: content-box;
+}
+.utl-entry__icon svg {
+  width: 15px;
+  height: 15px;
+}
+.utl-icon--note {
+  background: rgba(50, 140, 193, 0.12);
+  color: var(--utl-note);
+}
+.utl-icon--email {
+  background: rgba(124, 58, 237, 0.12);
+  color: var(--utl-email);
+}
+.utl-icon--call {
+  background: rgba(22, 163, 74, 0.12);
+  color: var(--utl-call);
+}
+.utl-icon--meeting {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--utl-meeting);
+}
+.utl-icon--activity {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--utl-activity);
+}
+.utl-icon--audit {
+  background: rgba(156, 163, 175, 0.1);
+  color: var(--utl-audit);
+}
+
+/* Content card */
+.utl-entry__body {
+  flex: 1;
+  min-width: 0;
+  background: var(--piquano-surface, #fff);
+  border: 1px solid var(--utl-line);
+  border-radius: var(--utl-radius);
+  padding: 12px 16px;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  margin-left: -8px;
+}
+.utl-entry__body:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  border-color: rgba(0,0,0,0.1);
+}
+.utl-entry__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+.utl-entry__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.utl-entry__type-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  line-height: 1.5;
+}
+.utl-type--note { background: rgba(50, 140, 193, 0.1); color: var(--utl-note); }
+.utl-type--email { background: rgba(124, 58, 237, 0.1); color: var(--utl-email); }
+.utl-type--call { background: rgba(22, 163, 74, 0.1); color: var(--utl-call); }
+.utl-type--meeting { background: rgba(245, 158, 11, 0.1); color: var(--utl-meeting); }
+.utl-type--activity { background: rgba(107, 114, 128, 0.1); color: var(--utl-activity); }
+.utl-type--audit { background: rgba(156, 163, 175, 0.08); color: var(--utl-audit); }
+
+.utl-entry__subtype {
+  font-weight: 400;
+  font-size: 10px;
+  margin-left: 4px;
+  opacity: 0.75;
+}
+
+/* Source badge */
+.utl-source {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.03em;
+  line-height: 1.5;
+}
+.utl-source--ats {
+  background: rgba(50, 140, 193, 0.1);
+  color: var(--utl-note);
+}
+.utl-source--crm {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--utl-call);
+}
+
+.utl-entry__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--piquano-text-muted, #64748b);
+  flex-shrink: 0;
+}
+.utl-entry__author {
+  font-weight: 600;
+  color: var(--piquano-text, #1e293b);
+}
+.utl-entry__time {
+  white-space: nowrap;
+}
+
+/* Content */
+.utl-entry__content {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--piquano-text, #1e293b);
+  word-break: break-word;
+}
+
+/* ── Email-specific ── */
+.utl-email__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.utl-email__direction {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.utl-email__direction--inbound { color: var(--utl-call); }
+.utl-email__direction--outbound { color: var(--utl-note); }
+.utl-email__subject {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--piquano-text, #1e293b);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+.utl-email__status {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  line-height: 1.4;
+}
+.utl-email__status--sent {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6b7280;
+}
+.utl-email__status--opened {
+  background: rgba(22, 163, 74, 0.1);
+  color: #16a34a;
+}
+.utl-email__status--bounce {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+.utl-email__preview {
+  font-size: 13px;
+  color: var(--piquano-text-muted, #64748b);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+.utl-email__expand {
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--piquano-button, #328cc1);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.15s;
+}
+.utl-email__expand:hover {
+  color: var(--piquano-primary, #133447);
+}
+.utl-email__chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+.utl-email__expand[aria-expanded="true"] .utl-email__chevron {
+  transform: rotate(180deg);
+}
+.utl-email__expand[aria-expanded="true"] .utl-email__expand-text::after {
+  content: none;
+}
+.utl-email__full {
+  display: none;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--piquano-text, #1e293b);
+  padding: 10px 0 0;
+  border-top: 1px solid var(--utl-line);
+  margin-top: 8px;
+  word-break: break-word;
+}
+.utl-email__full--open {
+  display: block;
+}
+
+/* ── Empty state ── */
+.utl-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--piquano-text-muted, #64748b);
+}
+.utl-empty__icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 12px;
+  opacity: 0.4;
+}
+.utl-empty p {
+  font-size: 14px;
+  margin: 0;
+}
+
+/* ── Load More ── */
+.utl-load-more {
+  margin-top: 16px;
+}
+
+/* ── Animations ── */
+@keyframes utlFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.utl-entry {
+  animation: utlFadeIn 0.25s ease both;
+}
+.utl-date-group:nth-child(2) .utl-entry { animation-delay: 0.03s; }
+.utl-date-group:nth-child(3) .utl-entry { animation-delay: 0.06s; }
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .utl-actionbar__buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+  .utl-action-btn {
+    padding: 10px 12px;
+    font-size: 12px;
+    gap: 6px;
+  }
+  /* Reset left-border for grid layout — use bottom/right borders instead */
+  .utl-action-btn + .utl-action-btn {
+    border-left: none;
+  }
+  .utl-action-btn {
+    border-bottom: 1px solid var(--utl-line);
+    border-right: 1px solid var(--utl-line);
+  }
+  .utl-action-btn:nth-child(2n) {
+    border-right: none;
+  }
+  .utl-action-btn:nth-last-child(-n+2) {
+    border-bottom: none;
+  }
+  .utl-action-btn--active::after {
+    left: 8px;
+    right: 8px;
+  }
+  .utl-panel {
+    padding: 12px 14px 16px;
+  }
+  .utl-field-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .utl-stream {
+    padding-left: 20px;
+  }
+  .utl-stream::before {
+    left: 11px;
+  }
+  .utl-entry__icon {
+    width: 26px;
+    height: 26px;
+    left: -12px;
+  }
+  .utl-entry__icon svg {
+    width: 12px;
+    height: 12px;
+  }
+  .utl-date-label::before {
+    left: -13px;
+    width: 6px;
+    height: 6px;
+  }
+  .utl-entry__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  .utl-entry__right {
+    font-size: 11px;
+  }
+  .utl-entry__body {
+    padding: 10px 12px;
+    margin-left: -4px;
+  }
+  .utl-filters {
+    gap: 2px;
+    padding: 3px;
+  }
+  .utl-tab {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+  .utl-compose__type-pills {
+    gap: 4px;
+  }
+  .utl-pill {
+    font-size: 11px;
+    padding: 3px 10px;
+  }
+}
+
+/* Focus styles for keyboard nav */
+.utl-action-btn:focus-visible,
+.utl-tab:focus-visible,
+.utl-pill:focus-visible,
+.utl-btn:focus-visible,
+.utl-email__expand:focus-visible {
+  outline: 2px solid var(--piquano-button, #328cc1);
+  outline-offset: 2px;
+}
+.utl-input:focus-visible {
+  outline: none; /* handled by border + box-shadow */
+}
+
+/* Print: hide interactive elements */
+@media print {
+  .utl-actionbar, .utl-filters, .utl-load-more,
+  .utl-email__expand { display: none !important; }
+  .utl-email__full { display: block !important; }
+  .utl-stream::before { background: #ccc; }
+}
+</style>
+
+<!-- JavaScript -->
+<script>
+(function() {
+  'use strict';
+
+  /* ── Action Bar: Panel Toggle ── */
+  var activePanel = null;
+
+  window.utlTogglePanel = function(panelName) {
+    var panel = document.getElementById('utlPanel' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+    var btn = document.getElementById('utlBtn' + panelName.charAt(0).toUpperCase() + panelName.slice(1));
+    if (!panel || !btn) return;
+
+    /* If this panel is already open, close it */
+    if (activePanel === panelName) {
+      utlClosePanel();
+      return;
+    }
+
+    /* Close any open panel first */
+    if (activePanel) {
+      utlClosePanelSilent();
+    }
+
+    /* Open the new panel */
+    panel.hidden = false;
+    btn.classList.add('utl-action-btn--active');
+    btn.setAttribute('aria-selected', 'true');
+    activePanel = panelName;
+
+    /* Focus the first input/textarea in the panel */
+    setTimeout(function() {
+      var firstInput = panel.querySelector('input:not([type=hidden]), textarea, select');
+      if (firstInput) firstInput.focus();
+    }, 50);
+  };
+
+  function utlClosePanelSilent() {
+    if (!activePanel) return;
+    var panel = document.getElementById('utlPanel' + activePanel.charAt(0).toUpperCase() + activePanel.slice(1));
+    var btn = document.getElementById('utlBtn' + activePanel.charAt(0).toUpperCase() + activePanel.slice(1));
+    if (panel) panel.hidden = true;
+    if (btn) {
+      btn.classList.remove('utl-action-btn--active');
+      btn.setAttribute('aria-selected', 'false');
+    }
+    activePanel = null;
+  }
+
+  window.utlClosePanel = function() {
+    if (!activePanel) return;
+    var panelId = 'utlPanel' + activePanel.charAt(0).toUpperCase() + activePanel.slice(1);
+    var panel = document.getElementById(panelId);
+
+    /* Reset form fields */
+    if (panel) {
+      var form = panel.querySelector('form');
+      if (form) form.reset();
+      /* Reset note pills */
+      var pills = panel.querySelectorAll('.utl-pill');
+      if (pills.length) {
+        pills.forEach(function(p) { p.classList.remove('utl-pill--active'); });
+        pills[0].classList.add('utl-pill--active');
+        var typeInput = document.getElementById('utlNoteType');
+        if (typeInput) typeInput.value = 'general';
+      }
+      /* Re-disable note submit */
+      var noteSubmit = document.getElementById('utlNoteSubmit');
+      if (noteSubmit) noteSubmit.disabled = true;
+    }
+
+    utlClosePanelSilent();
+  };
+
+  /* ── Note: enable/disable submit based on text ── */
+  var noteText = document.getElementById('utlNoteText');
+  var noteSubmit = document.getElementById('utlNoteSubmit');
+  if (noteText) {
+    noteText.addEventListener('input', function() {
+      if (noteSubmit) noteSubmit.disabled = !this.value.trim();
+    });
+  }
+
+  /* ── Pill selection (Note type) ── */
+  window.utlSelectPill = function(el) {
+    var pills = el.parentElement.querySelectorAll('.utl-pill');
+    pills.forEach(function(p) { p.classList.remove('utl-pill--active'); });
+    el.classList.add('utl-pill--active');
+    var typeInput = document.getElementById('utlNoteType');
+    if (typeInput) typeInput.value = el.getAttribute('data-value');
+  };
+
+  /* ── Filter Tabs ── */
+  var entries = document.querySelectorAll('.utl-entry');
+  var dateGroups = document.querySelectorAll('.utl-date-group');
+  var filterEmpty = document.getElementById('utlFilterEmpty');
+
+  /* Count entries per type */
+  var counts = { all: 0, note: 0, email: 0, activity: 0 };
+  entries.forEach(function(e) {
+    var t = e.getAttribute('data-type');
+    counts.all++;
+    if (t === 'note') counts.note++;
+    else if (t === 'email') counts.email++;
+    else counts.activity++; /* call, meeting, activity, audit all under "activities" */
+  });
+
+  var countAll = document.getElementById('utlCountAll');
+  var countNote = document.getElementById('utlCountNote');
+  var countEmail = document.getElementById('utlCountEmail');
+  var countActivity = document.getElementById('utlCountActivity');
+  if (countAll) countAll.textContent = counts.all;
+  if (countNote) countNote.textContent = counts.note;
+  if (countEmail) countEmail.textContent = counts.email;
+  if (countActivity) countActivity.textContent = counts.activity;
+
+  window.utlFilter = function(tab, filter) {
+    /* Update tabs */
+    var tabs = tab.parentElement.querySelectorAll('.utl-tab');
+    tabs.forEach(function(t) {
+      t.classList.remove('utl-tab--active');
+      t.setAttribute('aria-selected', 'false');
+    });
+    tab.classList.add('utl-tab--active');
+    tab.setAttribute('aria-selected', 'true');
+
+    var visible = 0;
+
+    entries.forEach(function(e) {
+      var type = e.getAttribute('data-type');
+      var show = false;
+
+      if (filter === 'all') {
+        show = true;
+      } else if (filter === 'note') {
+        show = (type === 'note');
+      } else if (filter === 'email') {
+        show = (type === 'email');
+      } else if (filter === 'activity') {
+        show = (type === 'call' || type === 'meeting' || type === 'activity' || type === 'audit');
+      }
+
+      if (show) {
+        e.classList.remove('utl-entry--hidden');
+        visible++;
+      } else {
+        e.classList.add('utl-entry--hidden');
+      }
+    });
+
+    /* Hide empty date groups */
+    dateGroups.forEach(function(g) {
+      var visibleInGroup = g.querySelectorAll('.utl-entry:not(.utl-entry--hidden)').length;
+      g.style.display = visibleInGroup > 0 ? '' : 'none';
+    });
+
+    /* Show/hide empty state */
+    if (filterEmpty) {
+      filterEmpty.style.display = (visible === 0) ? '' : 'none';
+    }
+  };
+
+  /* ── Email Expand/Collapse ── */
+  window.utlToggleEmail = function(btn) {
+    var full = btn.nextElementSibling;
+    var isOpen = btn.getAttribute('aria-expanded') === 'true';
+
+    if (isOpen) {
+      btn.setAttribute('aria-expanded', 'false');
+      full.classList.remove('utl-email__full--open');
+      full.setAttribute('aria-hidden', 'true');
+      btn.querySelector('.utl-email__expand-text').textContent = 'Vollstaendig anzeigen';
+    } else {
+      btn.setAttribute('aria-expanded', 'true');
+      full.classList.add('utl-email__full--open');
+      full.setAttribute('aria-hidden', 'false');
+      btn.querySelector('.utl-email__expand-text').textContent = 'Einklappen';
+    }
+  };
+
+  /* ── Load More (AJAX) ── */
+  window.utlLoadMore = function(btn) {
+    var url = btn.getAttribute('data-url');
+    if (!url) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Laden...';
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.html) {
+          var stream = document.getElementById('utlStream');
+          stream.insertAdjacentHTML('beforeend', data.html);
+
+          /* Re-query entries for filter */
+          entries = document.querySelectorAll('.utl-entry');
+          dateGroups = document.querySelectorAll('.utl-date-group');
+        }
+        if (data.next_url) {
+          btn.setAttribute('data-url', data.next_url);
+          btn.disabled = false;
+          btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="margin-right:6px;"><polyline points="6 9 12 15 18 9"/></svg>Weitere Eintraege laden';
+        } else {
+          var loadMore = document.getElementById('utlLoadMore');
+          if (loadMore) loadMore.style.display = 'none';
+        }
+      })
+      .catch(function() {
+        btn.disabled = false;
+        btn.textContent = 'Fehler - erneut versuchen';
+      });
+  };
+
+  /* ── Keyboard: Arrow-key navigation for filter tabs ── */
+  var filterBar = document.querySelector('.utl-filters');
+  if (filterBar) {
+    filterBar.addEventListener('keydown', function(e) {
+      var tabs = Array.from(this.querySelectorAll('.utl-tab'));
+      var idx = tabs.indexOf(document.activeElement);
+      if (idx < 0) return;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        var next = tabs[(idx + 1) % tabs.length];
+        next.focus();
+        next.click();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        var prev = tabs[(idx - 1 + tabs.length) % tabs.length];
+        prev.focus();
+        prev.click();
+      }
+    });
+  }
+
+  /* ── Keyboard: Arrow-key navigation for action bar buttons ── */
+  var actionBar = document.querySelector('.utl-actionbar__buttons');
+  if (actionBar) {
+    actionBar.addEventListener('keydown', function(e) {
+      var btns = Array.from(this.querySelectorAll('.utl-action-btn'));
+      var idx = btns.indexOf(document.activeElement);
+      if (idx < 0) return;
+
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        btns[(idx + 1) % btns.length].focus();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        btns[(idx - 1 + btns.length) % btns.length].focus();
+      } else if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        document.activeElement.click();
+      }
+    });
+  }
+
+  /* ── Escape to close panel ── */
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && activePanel) {
+      utlClosePanel();
+    }
+  });
+
+})();
+</script>

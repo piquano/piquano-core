@@ -29,6 +29,7 @@ MODULE_LABELS = {
     "crm.ms365": "Microsoft 365 Mail-Sync",
     "crm.timeline": "Timeline",
     "crm.accounts": "Benutzerverwaltung",
+    "crm.projektabrechnung": "Projektabrechnung",
     # ATS
     "ats.candidates": "Kandidaten",
     "ats.jobs": "Projekte & Ausschreibungen",
@@ -77,6 +78,7 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "ms365": ["read", "write"],
         "timeline": ["read"],
         "accounts": ["read", "write", "delete"],
+        "projektabrechnung": ["read", "write"],
     },
     "ats": {
         "candidates": ["read", "write", "delete"],
