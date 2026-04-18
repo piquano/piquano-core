@@ -1,18 +1,20 @@
 # piquano-core
 
-Shared building blocks for PIQUANO Django apps (CRM, ATS, Ticket, LMS).
+Shared building blocks for Piquano Django apps (CRM, ATS, App, LMS, Support).
 
-Provides the patterns that every internal app needs so they don't have to be
-re-invented per project: Authelia SSO middleware, CRM API client, Mailjet
-wrapper, audit/DSGVO helpers, design-system CSS, and deployment templates.
+Provides the patterns that every internal app needs: Authelia SSO middleware,
+CRM/ATS API clients, MS365 mail integration, audit/DSGVO helpers, Admin-Center,
+AI rate-limiting, design-system CSS, and shared database support.
+
+## License
+
+Proprietary. See [LICENSE](LICENSE).
 
 ## Install
 
-In a downstream app's `requirements.txt`:
-
-```
+```txt
 # Production: pin a tag
-piquano-core @ git+ssh://git@github.com/piquano/piquano-core.git@v0.1.0
+piquano-core @ git+ssh://git@github.com/piquano/piquano-core.git@v1.1.2
 
 # Staging: track main
 piquano-core @ git+ssh://git@github.com/piquano/piquano-core.git@main
@@ -20,27 +22,22 @@ piquano-core @ git+ssh://git@github.com/piquano/piquano-core.git@main
 
 ## Modules
 
-| Module                            | Purpose                                                |
-| --------------------------------- | ------------------------------------------------------ |
-| `piquano_core.sso.middleware`     | `AutheliaRemoteUserMiddleware` for Django              |
-| `piquano_core.crm_client`         | Python client for the internal CRM API                 |
-| `piquano_core.email.mailjet`      | Mailjet Send v3.1 wrapper with retry & logging        |
-| `piquano_core.audit.models`       | `AuditLog` model + DSGVO export/lock/anonymize helpers |
-| `piquano_core.utils`              | `get_client_ip`, `model_field_names`                   |
-
-## Deployment templates
-
-In `deploy/`:
-
-- `deploy.sh.template` — pull → migrate → collectstatic → restart → status check
-- `systemd.service.template` — Gunicorn unit
-- `nginx.conf.template` — site config with Authelia forward auth
-- `backup.sh.template` — daily PG dump to `/var/backups/<app>/`
-
-Replace placeholders (`__APP__`, `__PORT__`, `__DOMAIN__`) and copy into the
-target system.
+| Module | Purpose |
+|---|---|
+| `piquano_core.sso` | Authelia SSO middleware for Django |
+| `piquano_core.crm_client` | Python client for the internal CRM API |
+| `piquano_core.ats_client` | Python client for the internal ATS API |
+| `piquano_core.ms365` | MS365 Graph API mail sync (OAuth, crypto, adapter) |
+| `piquano_core.email` | Mailjet Send v3.1 wrapper with retry and logging |
+| `piquano_core.audit` | AuditLog model + DSGVO export/lock/anonymize helpers |
+| `piquano_core.admin_center` | Feature toggles, permissions, dashboard |
+| `piquano_core.shared` | Shared database models (notes, emails, activities) |
+| `piquano_core.ai` | Rate-limit decorator for Anthropic API endpoints |
+| `piquano_core.utils` | `get_client_ip`, `model_field_names` |
 
 ## Versioning
 
-Semantic Versioning. Breaking changes require a major bump and explicit
-upgrade in each consuming app.
+Semantic Versioning. Current: **v1.1.2**.
+
+CRM uses piquano-core as editable local install, ATS/LMS/Support install
+via pip from GitHub tag.
