@@ -268,8 +268,9 @@ def _system_metrics_api(request):
         except Exception:
             pass
 
-    # Service-Status via Port-Check (subprocess blockiert durch ProtectSystem)
+    # Service-Status via Port-Check + Response-Zeit
     import socket
+    import time as _time
 
     services = [
         ("CRM", 5003),
@@ -283,12 +284,48 @@ def _system_metrics_api(request):
     for name, port in services:
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.settimeout(1)
+            s.settimeout(2)
+            t0 = _time.monotonic()
             result = s.connect_ex(("127.0.0.1", port))
+            ms = round((_time.monotonic() - t0) * 1000)
             s.close()
-            data["services"].append({"name": name, "active": result == 0})
+            data["services"].append({"name": name, "active": result == 0, "ms": ms if result == 0 else None})
         except Exception:
-            data["services"].append({"name": name, "active": False})
+            data["services"].append({"name": name, "active": False, "ms": None})
+
+    # DB-Größen
+    try:
+        from django.db import connections
+        with connections["default"].cursor() as cur:
+            cur.execute("""
+                SELECT datname, pg_database_size(datname)
+                FROM pg_database
+                WHERE datname LIKE 'piquano_%' AND datname NOT LIKE '%staging%'
+                ORDER BY pg_database_size(datname) DESC
+            """)
+            data["databases"] = [
+                {"name": row[0], "size_mb": round(row[1] / 1024 / 1024, 1)}
+                for row in cur.fetchall()
+            ]
+    except Exception:
+        data["databases"] = []
+
+    # Letztes Backup
+    import glob
+    import os
+    try:
+        log_dir = "/var/log/piquano/"
+        logs = sorted(glob.glob(f"{log_dir}pg-backup-*.log"), reverse=True)
+        if logs:
+            mtime = os.path.getmtime(logs[0])
+            from datetime import datetime
+            data["last_backup"] = {
+                "file": os.path.basename(logs[0]),
+                "date": datetime.fromtimestamp(mtime).strftime("%d.%m.%Y %H:%M"),
+                "ok": "Remote-Verify bestanden" in open(logs[0]).read(),
+            }
+    except Exception:
+        data["last_backup"] = None
 
     return JsonResponse(data)
 

@@ -43,10 +43,26 @@
     </div>
 </div>
 
-<div class="card" style="margin-bottom:24px;">
-    <div class="card-header"><h2>Services</h2></div>
-    <div class="card-body" id="services" style="font-size:14px;">
-        Lade...
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:24px;">
+    <div class="card">
+        <div class="card-header"><h2>Services</h2></div>
+        <div class="card-body" id="services" style="font-size:14px;">
+            Lade...
+        </div>
+    </div>
+    <div>
+        <div class="card" style="margin-bottom:16px;">
+            <div class="card-header"><h2>Datenbanken</h2></div>
+            <div class="card-body" id="databases" style="font-size:14px;">
+                Lade...
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2>Letztes Backup</h2></div>
+            <div class="card-body" id="backup" style="font-size:14px;">
+                Lade...
+            </div>
+        </div>
     </div>
 </div>
 
@@ -77,13 +93,27 @@ function loadMetrics() {
                 document.getElementById('uptime').textContent = d.uptime_days + 'd';
             }
             if (d.services) {
-                var html = '<table style="width:100%;"><tr><th style="text-align:left;">Service</th><th style="text-align:center;">Status</th></tr>';
+                var html = '<table style="width:100%;"><tr><th style="text-align:left;">Service</th><th style="text-align:center;">Status</th><th style="text-align:right;">Response</th></tr>';
                 d.services.forEach(function(s) {
-                    var badge = s.active ? '<span class="badge badge-green">active</span>' : '<span class="badge badge-red">failed</span>';
-                    html += '<tr><td>' + s.name + '</td><td style="text-align:center;">' + badge + '</td></tr>';
+                    var badge = s.active ? '<span class="badge badge-green">active</span>' : '<span class="badge badge-red">down</span>';
+                    var ms = s.ms !== null ? s.ms + ' ms' : '--';
+                    var msColor = s.ms !== null ? (s.ms < 5 ? '#22c55e' : s.ms < 50 ? '#eab308' : '#ef4444') : '#94a3b8';
+                    html += '<tr><td>' + s.name + '</td><td style="text-align:center;">' + badge + '</td><td style="text-align:right;color:' + msColor + ';font-weight:600;">' + ms + '</td></tr>';
                 });
                 html += '</table>';
                 document.getElementById('services').innerHTML = html;
+            }
+            if (d.databases) {
+                var html = '<table style="width:100%;"><tr><th style="text-align:left;">Datenbank</th><th style="text-align:right;">Groesse</th></tr>';
+                d.databases.forEach(function(db) {
+                    html += '<tr><td>' + db.name + '</td><td style="text-align:right;font-weight:600;">' + db.size_mb + ' MB</td></tr>';
+                });
+                html += '</table>';
+                document.getElementById('databases').innerHTML = html;
+            }
+            if (d.last_backup) {
+                var badge = d.last_backup.ok ? '<span class="badge badge-green">Verifiziert</span>' : '<span class="badge badge-yellow">Nicht verifiziert</span>';
+                document.getElementById('backup').innerHTML = '<p><strong>' + d.last_backup.date + '</strong> ' + badge + '</p><p style="color:#64748b;font-size:13px;">' + d.last_backup.file + '</p>';
             }
         })
         .catch(function() {
