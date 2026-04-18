@@ -10,7 +10,16 @@ from __future__ import annotations
 
 
 class _ToggleDict(dict):
-    """Dict that supports attribute access for template dot-notation."""
+    """Dict for feature toggles. Default: True (features enabled unless explicitly disabled)."""
+
+    def __getattr__(self, key):
+        if key.startswith("_"):
+            return super().__getattribute__(key)
+        return self.get(key, True)
+
+
+class _PermDict(dict):
+    """Dict for permissions. Default: False (denied unless explicitly granted). Superusers get True."""
 
     _superuser = False
 
@@ -19,7 +28,7 @@ class _ToggleDict(dict):
             return super().__getattribute__(key)
         if self._superuser:
             return True
-        return self.get(key, False)  # Default: no permission
+        return self.get(key, False)
 
 
 def piquano_context(request):
@@ -47,13 +56,10 @@ def piquano_context(request):
         ctx["piquano_permissions"] = perm_set
 
         # Template-friendly: "ats.candidates.read" → perms_check.ats_candidates_read = True
-        perms_dict = _ToggleDict()
-        if request.user.is_superuser:
-            perms_dict._superuser = True
-        else:
-            for p in perm_set:
-                perms_dict[p.replace(".", "_")] = True
+        perms_dict = _PermDict()
         perms_dict._superuser = getattr(request.user, "is_superuser", False)
+        for p in perm_set:
+            perms_dict[p.replace(".", "_")] = True
         ctx["perms_check"] = perms_dict
 
         raw_toggles = _load_toggles(request.user)
