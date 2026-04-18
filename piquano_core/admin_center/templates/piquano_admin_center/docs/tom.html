@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}TOM (Art. 32 DSGVO) -- Piquano{% endblock %}
+
+{% block content %}
+<style>
+.doc-content { max-width:900px; }
+.doc-content h2 { font-size:1.3rem; margin:2rem 0 1rem; padding-bottom:8px; border-bottom:1px solid #e2e8f0; color:#133447; }
+.doc-content ul { margin:0.5rem 0 1rem 1.5rem; }
+.doc-content li { margin-bottom:6px; line-height:1.6; }
+</style>
+
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
+    <h1>Technisch-Organisatorische Massnahmen (Art. 32 DSGVO)</h1>
+    <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn btn-secondary">Zurueck</a>
+</div>
+
+<div class="card">
+<div class="card-body doc-content">
+
+<p><strong>Verantwortlicher:</strong> Piquano GmbH, Uwe Sunkel | <strong>Stand:</strong> 2026-04-18 | <strong>Naechstes Review:</strong> quartalsweise</p>
+
+<h2>1. Zutrittskontrolle</h2>
+<ul>
+<li>Hosting bei Hetzner Online GmbH (ISO 27001), Rechenzentren Falkenstein/Nuernberg (DE)</li>
+<li>Kein physischer Serverzugang durch Piquano-Mitarbeiter</li>
+</ul>
+
+<h2>2. Zugangskontrolle</h2>
+<ul>
+<li>SSH-Zugang nur per Ed25519-Key (kein Passwort-Login)</li>
+<li>Authelia SSO fuer alle 5 Web-Apps</li>
+<li>UFW-Firewall: nur Port 22, 80, 443 erlaubt</li>
+<li>Sudo-Rechte eingeschraenkt auf spezifische Befehle</li>
+<li>Interne Services (9091, 9100) nur auf 127.0.0.1</li>
+<li>fail2ban aktiv fuer SSH</li>
+</ul>
+
+<h2>3. Zugriffskontrolle</h2>
+<ul>
+<li>Rollenbasiertes Berechtigungssystem (Admin-Center Permissions)</li>
+<li>Django REST Framework mit Token-Authentication</li>
+<li>Webhook-Endpoints mit API-Key + Rate-Limiting</li>
+<li>KI-Endpoints mit per-User Rate-Limiting (10/min)</li>
+<li>.env-Dateien mit 0600-Permissions</li>
+</ul>
+
+<h2>4. Weitergabekontrolle</h2>
+<ul>
+<li>TLS 1.3 auf allen Domains (Let's Encrypt)</li>
+<li>Django SECURE_SSL_REDIRECT + SESSION_COOKIE_SECURE</li>
+<li>Content-Security-Policy Header</li>
+<li>Backups GPG-AES256-verschluesselt vor Transfer</li>
+<li>Storage-Box-Zugang nur per SSH-Key</li>
+</ul>
+
+<h2>5. Eingabekontrolle</h2>
+<ul>
+<li>Audit-Log in CRM (26.000+ Eintraege)</li>
+<li>Audit-Log in ATS mit Pre-Save/Post-Save Signals</li>
+<li>Timeline-System mit Source-Badges</li>
+<li>systemd-Journal fuer alle Services</li>
+</ul>
+
+<h2>6. Auftragskontrolle</h2>
+<ul>
+<li>AV-Vertraege-Register in Notion (7 Auftragsverarbeiter)</li>
+<li>Anthropic API: Daten nicht fuer Training verwendet</li>
+<li>Mailjet: EU-Hosting, DPA akzeptiert</li>
+</ul>
+
+<h2>7. Verfuegbarkeitskontrolle</h2>
+<ul>
+<li>Taegliches Backup aller 14 Datenbanken (GPG + Remote)</li>
+<li>Backup-Remote-Verify nach jedem Upload</li>
+<li>OnFailure-Alerts auf 25 Services</li>
+<li>Restore-Script mit 3 Optionen (DB/App/Full), Drill erfolgreich</li>
+<li>Media + Configs taeglich gesichert</li>
+<li>GPG-Key extern in 1Password</li>
+</ul>
+
+<h2>8. Trennungskontrolle</h2>
+<ul>
+<li>Separate Datenbanken pro App (14 Datenbanken)</li>
+<li>Staging komplett getrennt von Prod</li>
+<li>Feature-Toggles pro App</li>
+</ul>
+
+<h2>9. Pseudonymisierung und Verschluesselung</h2>
+<ul>
+<li>MS365-Tokens mit Fernet-Verschluesselung in der DB</li>
+<li>Retention-Cleanup: Anonymisierung nach 24 Monaten</li>
+<li>Backups mit GPG AES256</li>
+</ul>
+
+</div>
+</div>
+{% endblock %}

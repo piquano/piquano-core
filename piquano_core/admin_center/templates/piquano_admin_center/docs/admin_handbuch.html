@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Admin-Handbuch -- Piquano{% endblock %}
+
+{% block content %}
+<style>
+.doc-content { max-width:900px; }
+.doc-content h2 { font-size:1.3rem; margin:2rem 0 1rem; padding-bottom:8px; border-bottom:1px solid #e2e8f0; color:#133447; }
+.doc-content h3 { font-size:1.1rem; margin:1.5rem 0 0.5rem; color:#334155; }
+.doc-content table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:14px; }
+.doc-content th, .doc-content td { padding:8px 12px; border:1px solid #e2e8f0; text-align:left; }
+.doc-content th { background:#f8fafc; font-weight:600; color:#133447; }
+.doc-content code { background:#f1f5f9; padding:2px 6px; border-radius:4px; font-size:13px; }
+.doc-content pre { background:#1e293b; color:#e2e8f0; padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; margin:1rem 0; }
+</style>
+
+<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
+    <h1>Admin-Handbuch</h1>
+    <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn btn-secondary">Zurueck</a>
+</div>
+
+<div class="card">
+<div class="card-body doc-content">
+
+<h2>1. Plattform-Uebersicht</h2>
+<table>
+<tr><th>App</th><th>URL</th><th>Zweck</th><th>Port</th></tr>
+<tr><td>App (Hub)</td><td>app.piquano.com</td><td>Dashboard, Partner, KI-Tools, Onboarding</td><td>5005</td></tr>
+<tr><td>CRM</td><td>crm.piquano.com</td><td>Kontakte, Deals, E-Mails, Projektabrechnung</td><td>5003</td></tr>
+<tr><td>ATS</td><td>ats.piquano.com</td><td>Kandidaten, Projekte, Pipeline, Karriereseite</td><td>5006</td></tr>
+<tr><td>LMS</td><td>lms.piquano.com</td><td>Kurse, Lektionen, Videos, Zertifikate</td><td>5008</td></tr>
+<tr><td>Support</td><td>support.piquano.com</td><td>Tickets, SLA, Wissensdatenbank</td><td>5009</td></tr>
+</table>
+<p>Alle Apps laufen auf einem Hetzner VPS (Ubuntu 24.04) mit Django + PostgreSQL. SSO ueber Authelia (auth.piquano.com).</p>
+
+<h2>2. Haeufige Aufgaben</h2>
+
+<h3>Service neu starten</h3>
+<pre>sudo systemctl restart crm.service          # CRM
+sudo systemctl restart ats-prod.service      # ATS
+sudo systemctl restart piquano-app.service   # App
+sudo systemctl restart lms-prod.service      # LMS
+sudo systemctl restart support-prod.service  # Support</pre>
+
+<h3>Service-Status pruefen</h3>
+<pre>systemctl status crm.service
+sudo journalctl -u crm.service -n 50 --no-pager</pre>
+
+<h3>Code deployen</h3>
+<pre>cd /opt/&lt;app&gt;
+git pull origin prod    # (oder main bei LMS/Support)
+sudo systemctl restart &lt;service&gt;.service</pre>
+
+<h2>3. Backups</h2>
+<p>Taeglich um 03:00 UTC: 14 Datenbanken + Media + Configs, GPG-verschluesselt auf Hetzner Storage Box.</p>
+<pre># Backup-Log pruefen
+tail -20 /var/log/piquano/pg-backup-$(date +%Y-%m-%d).log
+
+# Restore
+/opt/piquano-backup/restore.sh list                  # Backups anzeigen
+/opt/piquano-backup/restore.sh db piquano_crm         # DB restoren
+/opt/piquano-backup/restore.sh full                    # Gesamtes System</pre>
+
+<h2>4. Sicherheit</h2>
+<table>
+<tr><th>Massnahme</th><th>Status</th></tr>
+<tr><td>UFW Firewall</td><td>Aktiv (22/80/443 erlaubt)</td></tr>
+<tr><td>SSL/TLS</td><td>Let's Encrypt, automatische Erneuerung</td></tr>
+<tr><td>OnFailure-Alerts</td><td>25 Services, E-Mail bei Crash</td></tr>
+<tr><td>Backup-Remote-Verify</td><td>Groessenvergleich nach Upload</td></tr>
+<tr><td>KI Rate-Limit</td><td>10/min per User, Budget 200$/Monat</td></tr>
+<tr><td>Dependabot</td><td>Woechentlich in 6 Repos</td></tr>
+</table>
+
+<h2>5. Notfall</h2>
+<p><strong>App nicht erreichbar?</strong> <code>systemctl status &lt;service&gt;</code> → <code>journalctl -u &lt;service&gt; -n 50</code> → <code>systemctl restart &lt;service&gt;</code></p>
+<p><strong>VPS komplett weg?</strong> SSH-Key + GPG-Key aus 1Password → <code>/opt/piquano-backup/restore.sh full</code> → DNS umstellen.</p>
+<p><strong>Ansprechpartner:</strong> usunkel@piquano.com</p>
+
+</div>
+</div>
+{% endblock %}

@@ -218,3 +218,21 @@ def save_user_permissions(request, user_id):
         f"Berechtigungen fuer {target_user.get_full_name() or target_user.username} gespeichert.",
     )
     return redirect("piquano_admin_center:user_permissions", user_id=user_id)
+
+
+@_staff_required
+def system_status(request):
+    """System-Status mit eingebettetem Grafana-Dashboard."""
+    grafana_url = getattr(django_settings, "PIQUANO_GRAFANA_URL", "https://metrics.piquano.com")
+    dashboard_path = "/d/piquano-vps/piquano-vps?orgId=1&kiosk"
+    return render(
+        request,
+        "piquano_admin_center/system_status.html",
+        {"grafana_embed_url": f"{grafana_url}{dashboard_path}"},
+    )
+
+
+@_staff_required
+def docs_page(request, page):
+    """Statische Dokumentationsseiten (Admin-Handbuch, TOM, VVT)."""
+    return render(request, f"piquano_admin_center/docs/{page}.html")

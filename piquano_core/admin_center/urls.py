@@ -19,4 +19,8 @@ urlpatterns = [
         views.save_user_permissions,
         name="save_permissions",
     ),
+    path("system/", views.system_status, name="system_status"),
+    path("docs/admin-handbuch/", views.docs_page, name="docs_admin", kwargs={"page": "admin_handbuch"}),
+    path("docs/tom/", views.docs_page, name="docs_tom", kwargs={"page": "tom"}),
+    path("docs/vvt/", views.docs_page, name="docs_vvt", kwargs={"page": "vvt"}),
 ]

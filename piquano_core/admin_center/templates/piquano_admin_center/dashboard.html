@@ -40,8 +40,12 @@
     <div class="card-header"><h2>Quick-Links</h2></div>
     <div class="card-body">
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <a href="{% url 'piquano_admin_center:toggles' %}" class="btn btn-primary">Feature-Toggles verwalten</a>
-            <a href="{% url 'piquano_admin_center:permissions' %}" class="btn btn-secondary">Berechtigungen verwalten</a>
+            <a href="{% url 'piquano_admin_center:toggles' %}" class="btn btn-primary">Feature-Toggles</a>
+            <a href="{% url 'piquano_admin_center:permissions' %}" class="btn btn-secondary">Berechtigungen</a>
+            <a href="{% url 'piquano_admin_center:system_status' %}" class="btn btn-secondary">System-Status</a>
+            <a href="{% url 'piquano_admin_center:docs_admin' %}" class="btn btn-secondary">Admin-Handbuch</a>
+            <a href="{% url 'piquano_admin_center:docs_tom' %}" class="btn btn-secondary">TOM (Art. 32)</a>
+            <a href="{% url 'piquano_admin_center:docs_vvt' %}" class="btn btn-secondary">VVT (Art. 30)</a>
         </div>
     </div>
 </div>

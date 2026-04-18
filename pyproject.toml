@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piquano-core"
-version = "0.9.0"
+version = "1.1.0"
 description = "Shared building blocks for Piquano Django apps (auth, CRM client, MS365 mail, audit)"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -36,6 +36,7 @@ piquano_core = [
     "static/piquano_core/css/*.css",
     "templates/piquano_core/*.html",
     "templates/piquano_ms365/*.html",
+    "admin_center/templates/piquano_admin_center/*.html",
 ]
 
 [tool.ruff]
