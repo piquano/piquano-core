@@ -168,11 +168,14 @@ def user_permissions(request, user_id):
             }
         )
 
-    # Sort for consistent rendering
-    grouped_sorted = {
-        app: {"label": data["label"], "modules": dict(sorted(data["modules"].items()))}
-        for app, data in sorted(grouped.items())
-    }
+    # Sort for consistent rendering: modules alphabetically, permissions read → write → delete
+    codename_order = {"read": 0, "write": 1, "delete": 2}
+    grouped_sorted = {}
+    for app, data in sorted(grouped.items()):
+        sorted_modules = {}
+        for module, perms in sorted(data["modules"].items()):
+            sorted_modules[module] = sorted(perms, key=lambda p: codename_order.get(p["codename"], 9))
+        grouped_sorted[app] = {"label": data["label"], "modules": sorted_modules}
 
     return render(
         request,
