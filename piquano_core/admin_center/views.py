@@ -222,14 +222,73 @@ def save_user_permissions(request, user_id):
 
 @_staff_required
 def system_status(request):
-    """System-Status mit eingebettetem Grafana-Dashboard."""
+    """System-Status Dashboard mit Live-Metriken."""
     grafana_url = getattr(django_settings, "PIQUANO_GRAFANA_URL", "https://metrics.piquano.com")
-    dashboard_path = "/d/piquano-vps/piquano-vps?orgId=1&kiosk"
+
+    # API-Endpoint für AJAX-Metriken
+    if request.path.endswith("/api/metrics/"):
+        return _system_metrics_api(request)
+
     return render(
         request,
         "piquano_admin_center/system_status.html",
-        {"grafana_embed_url": f"{grafana_url}{dashboard_path}"},
+        {"grafana_url": grafana_url},
     )
+
+
+def _system_metrics_api(request):
+    """JSON-API: Prometheus-Metriken + Service-Status."""
+    import json
+    import subprocess
+    import urllib.request
+    from django.http import JsonResponse
+
+    data = {"cpu": None, "ram": None, "disk": None, "uptime_days": None, "services": []}
+
+    # Prometheus-Queries
+    prom = "http://127.0.0.1:9090/api/v1/query"
+    queries = {
+        "cpu": '100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)',
+        "ram": '(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100',
+        "disk": '(1 - node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100',
+        "uptime": "node_time_seconds - node_boot_time_seconds",
+    }
+
+    for key, query in queries.items():
+        try:
+            url = f"{prom}?query={urllib.parse.quote(query)}"
+            with urllib.request.urlopen(url, timeout=3) as resp:
+                result = json.loads(resp.read())
+                if result.get("data", {}).get("result"):
+                    val = float(result["data"]["result"][0]["value"][1])
+                    if key == "uptime":
+                        data["uptime_days"] = int(val / 86400)
+                    else:
+                        data[key] = round(val, 1)
+        except Exception:
+            pass
+
+    # Service-Status
+    services = [
+        "crm.service", "ats-prod.service", "piquano-app.service",
+        "lms-prod.service", "support-prod.service",
+        "prometheus.service", "grafana-server.service",
+        "piquano-pg-backup.timer",
+    ]
+    for svc in services:
+        try:
+            result = subprocess.run(
+                ["systemctl", "is-active", svc],
+                capture_output=True, text=True, timeout=3,
+            )
+            data["services"].append({
+                "name": svc.replace(".service", "").replace(".timer", " (timer)"),
+                "active": result.stdout.strip() == "active",
+            })
+        except Exception:
+            data["services"].append({"name": svc, "active": False})
+
+    return JsonResponse(data)
 
 
 @_staff_required
