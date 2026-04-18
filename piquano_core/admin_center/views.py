@@ -268,25 +268,27 @@ def _system_metrics_api(request):
         except Exception:
             pass
 
-    # Service-Status
+    # Service-Status via Port-Check (subprocess blockiert durch ProtectSystem)
+    import socket
+
     services = [
-        "crm.service", "ats-prod.service", "piquano-app.service",
-        "lms-prod.service", "support-prod.service",
-        "prometheus.service", "grafana-server.service",
-        "piquano-pg-backup.timer",
+        ("CRM", 5003),
+        ("ATS", 5006),
+        ("App", 5005),
+        ("LMS", 5008),
+        ("Support", 5009),
+        ("Prometheus", 9090),
+        ("Grafana", 3000),
     ]
-    for svc in services:
+    for name, port in services:
         try:
-            result = subprocess.run(
-                ["systemctl", "is-active", svc],
-                capture_output=True, text=True, timeout=3,
-            )
-            data["services"].append({
-                "name": svc.replace(".service", "").replace(".timer", " (timer)"),
-                "active": result.stdout.strip() == "active",
-            })
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.settimeout(1)
+            result = s.connect_ex(("127.0.0.1", port))
+            s.close()
+            data["services"].append({"name": name, "active": result == 0})
         except Exception:
-            data["services"].append({"name": svc, "active": False})
+            data["services"].append({"name": name, "active": False})
 
     return JsonResponse(data)
 

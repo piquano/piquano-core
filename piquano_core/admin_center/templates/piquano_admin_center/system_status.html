@@ -64,8 +64,11 @@ function setGauge(id, pct) {
 }
 
 function loadMetrics() {
-    fetch('/admin-center/system/api/metrics/')
-        .then(function(r) { return r.json(); })
+    fetch('/admin-center/system/api/metrics/', {credentials: 'same-origin'})
+        .then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        })
         .then(function(d) {
             if (d.cpu !== undefined) setGauge('cpu', d.cpu);
             if (d.ram !== undefined) setGauge('ram', d.ram);
