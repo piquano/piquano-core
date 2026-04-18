@@ -12,15 +12,28 @@ from __future__ import annotations
 class _ToggleDict(dict):
     """Dict that supports attribute access for template dot-notation."""
 
+    _superuser = False
+
     def __getattr__(self, key):
-        return self.get(key, True)  # Default: enabled
+        if key.startswith("_"):
+            return super().__getattribute__(key)
+        if self._superuser:
+            return True
+        return self.get(key, False)  # Default: no permission
 
 
 def piquano_context(request):
-    """Add Piquano permissions and feature toggles to template context."""
+    """Add Piquano permissions and feature toggles to template context.
+
+    Templates can check permissions with dot-notation:
+        {% if perms.ats_candidates_read %}
+        {% if perms.crm_deals_write %}
+    Superusers always get True for all permissions.
+    """
     ctx = {
         "piquano_permissions": set(),
         "piquano_toggles": _ToggleDict(),
+        "perms_check": _ToggleDict(),
     }
 
     if (
@@ -30,7 +43,19 @@ def piquano_context(request):
     ):
         from .middleware import _load_perms, _load_toggles
 
-        ctx["piquano_permissions"] = _load_perms(request.user)
+        perm_set = _load_perms(request.user)
+        ctx["piquano_permissions"] = perm_set
+
+        # Template-friendly: "ats.candidates.read" → perms_check.ats_candidates_read = True
+        perms_dict = _ToggleDict()
+        if request.user.is_superuser:
+            perms_dict._superuser = True
+        else:
+            for p in perm_set:
+                perms_dict[p.replace(".", "_")] = True
+        perms_dict._superuser = getattr(request.user, "is_superuser", False)
+        ctx["perms_check"] = perms_dict
+
         raw_toggles = _load_toggles(request.user)
         friendly = _ToggleDict()
         for (app, module), enabled in raw_toggles.items():

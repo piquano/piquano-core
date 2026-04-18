@@ -162,6 +162,12 @@ class AutheliaRemoteUserMiddleware:
                     user.role = role
                     update_fields.append("role")
                 user.save(update_fields=update_fields)
+                # Assign default permissions (read + write)
+                try:
+                    from piquano_core.admin_center.permissions import assign_default_permissions
+                    assign_default_permissions(user)
+                except Exception:
+                    logger.warning("Could not assign default permissions for %s", profile.username)
                 logger.info("Auto-provisioned user: %s", profile.username)
             return user
         except IntegrityError:
