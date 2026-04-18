@@ -15,13 +15,12 @@
 .select-all-label input { width:14px; height:14px; accent-color:#328cc1; cursor:pointer; }
 </style>
 
-<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
-    <div>
-        <h1>Berechtigungen: {{ target_user.get_full_name|default:target_user.username }}</h1>
-        <p style="color:#64748b; margin-top:4px;">{{ target_user.email }}</p>
-    </div>
-    <a href="{% url 'piquano_admin_center:permissions' %}" class="btn btn-secondary">Zurueck</a>
+<div class="page-header">
+    <h1>Berechtigungen: {{ target_user.get_full_name|default:target_user.username }}</h1>
+    <p style="color:#64748b; margin-top:4px;">{{ target_user.email }}</p>
 </div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="permissions" %}
 
 <form method="post" action="{% url 'piquano_admin_center:save_permissions' target_user.id %}">
     {% csrf_token %}

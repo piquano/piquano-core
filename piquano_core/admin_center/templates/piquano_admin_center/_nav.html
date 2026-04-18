@@ -1,0 +1,9 @@
+<div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px; padding:12px 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px;">
+    <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn {% if nav_active == 'dashboard' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Dashboard</a>
+    <a href="{% url 'piquano_admin_center:toggles' %}" class="btn {% if nav_active == 'toggles' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Feature-Toggles</a>
+    <a href="{% url 'piquano_admin_center:permissions' %}" class="btn {% if nav_active == 'permissions' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Berechtigungen</a>
+    <a href="{% url 'piquano_admin_center:system_status' %}" class="btn {% if nav_active == 'system' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">System-Status</a>
+    <a href="{% url 'piquano_admin_center:docs_admin' %}" class="btn {% if nav_active == 'docs_admin' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Admin-Handbuch</a>
+    <a href="{% url 'piquano_admin_center:docs_tom' %}" class="btn {% if nav_active == 'docs_tom' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">TOM</a>
+    <a href="{% url 'piquano_admin_center:docs_vvt' %}" class="btn {% if nav_active == 'docs_vvt' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">VVT</a>
+</div>

@@ -13,10 +13,11 @@
 .doc-content pre { background:#1e293b; color:#e2e8f0; padding:16px; border-radius:8px; overflow-x:auto; font-size:13px; margin:1rem 0; }
 </style>
 
-<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
+<div class="page-header">
     <h1>Admin-Handbuch</h1>
-    <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn btn-secondary">Zurueck</a>
 </div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="docs_admin" %}
 
 <div class="card">
 <div class="card-body doc-content">

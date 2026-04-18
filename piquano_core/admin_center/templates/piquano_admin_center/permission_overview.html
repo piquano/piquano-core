@@ -2,10 +2,11 @@
 {% block title %}Berechtigungen -- Admin-Center{% endblock %}
 
 {% block content %}
-<div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
+<div class="page-header">
     <h1>Berechtigungen</h1>
-    <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn btn-secondary">Zurueck</a>
 </div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="permissions" %}
 
 <div class="card">
     <div class="card-body" style="padding:0;">

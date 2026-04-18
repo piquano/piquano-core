@@ -16,11 +16,10 @@
 
 <div class="page-header" style="display:flex; align-items:center; justify-content:space-between;">
     <h1>System-Status</h1>
-    <div style="display:flex; gap:8px;">
-        <a href="{{ grafana_url }}" target="_blank" class="btn btn-primary">Grafana Dashboard</a>
-        <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn btn-secondary">Zurueck</a>
-    </div>
+    <a href="{{ grafana_url }}" target="_blank" class="btn btn-primary">Grafana Dashboard</a>
 </div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="system" %}
 
 <div class="status-grid" id="metrics">
     <div class="status-card">
@@ -51,16 +50,6 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header"><h2>Dokumentation</h2></div>
-    <div class="card-body">
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <a href="{% url 'piquano_admin_center:docs_admin' %}" class="btn btn-secondary">Admin-Handbuch</a>
-            <a href="{% url 'piquano_admin_center:docs_tom' %}" class="btn btn-secondary">TOM (Art. 32 DSGVO)</a>
-            <a href="{% url 'piquano_admin_center:docs_vvt' %}" class="btn btn-secondary">VVT (Art. 30 DSGVO)</a>
-        </div>
-    </div>
-</div>
 
 <script>
 function setGauge(id, pct) {

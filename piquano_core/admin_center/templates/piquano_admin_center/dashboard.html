@@ -6,6 +6,8 @@
     <h1>Admin-Center</h1>
 </div>
 
+{% include "piquano_admin_center/_nav.html" with nav_active="dashboard" %}
+
 <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:20px; margin-bottom:32px;">
     <!-- Feature-Toggles KPI -->
     <div class="card">
@@ -36,17 +38,4 @@
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header"><h2>Quick-Links</h2></div>
-    <div class="card-body">
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <a href="{% url 'piquano_admin_center:toggles' %}" class="btn btn-primary">Feature-Toggles</a>
-            <a href="{% url 'piquano_admin_center:permissions' %}" class="btn btn-secondary">Berechtigungen</a>
-            <a href="{% url 'piquano_admin_center:system_status' %}" class="btn btn-secondary">System-Status</a>
-            <a href="{% url 'piquano_admin_center:docs_admin' %}" class="btn btn-secondary">Admin-Handbuch</a>
-            <a href="{% url 'piquano_admin_center:docs_tom' %}" class="btn btn-secondary">TOM (Art. 32)</a>
-            <a href="{% url 'piquano_admin_center:docs_vvt' %}" class="btn btn-secondary">VVT (Art. 30)</a>
-        </div>
-    </div>
-</div>
 {% endblock %}
