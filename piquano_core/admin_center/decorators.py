@@ -14,8 +14,9 @@ from __future__ import annotations
 from functools import wraps
 
 from django.conf import settings
-from django.http import HttpResponseForbidden
 from django.shortcuts import redirect
+from django.template import loader
+from django.http import HttpResponseForbidden
 
 
 def require_permission(codename: str):
@@ -30,7 +31,11 @@ def require_permission(codename: str):
             if not hasattr(request.user, "has_piquano_perm"):
                 return view_func(request, *args, **kwargs)  # Middleware fehlt → fail-open
             if not request.user.has_piquano_perm(codename):
-                return HttpResponseForbidden("Keine Berechtigung")
+                try:
+                    template = loader.get_template("403.html")
+                    return HttpResponseForbidden(template.render(request=request))
+                except Exception:
+                    return HttpResponseForbidden("Keine Berechtigung")
             return view_func(request, *args, **kwargs)
 
         return wrapper
@@ -50,7 +55,11 @@ def require_feature(app_label: str, module_name: str):
             if not hasattr(request.user, "is_feature_enabled"):
                 return view_func(request, *args, **kwargs)  # Middleware fehlt → fail-open
             if not request.user.is_feature_enabled(app_label, module_name):
-                return HttpResponseForbidden("Feature nicht verfuegbar")
+                try:
+                    template = loader.get_template("403.html")
+                    return HttpResponseForbidden(template.render(request=request))
+                except Exception:
+                    return HttpResponseForbidden("Feature nicht verfuegbar")
             return view_func(request, *args, **kwargs)
 
         return wrapper
