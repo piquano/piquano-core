@@ -14,11 +14,16 @@ if TYPE_CHECKING:
 
 
 def _load_perms(user):
-    """Load all granted permissions for user into a set of codename strings."""
-    if user._piquano_perms is None:
-        from .models import UserPermission
+    """Load all granted permissions for user into a set of codename strings.
 
-        qs = (
+    Merges user-level and team-level permissions. Team permissions are
+    loaded if the user has a ``team_id`` attribute (set by the consumer app).
+    """
+    if user._piquano_perms is None:
+        from .models import TeamPermission, UserPermission
+
+        # User-level permissions
+        user_qs = (
             UserPermission.objects.filter(user=user, is_granted=True)
             .select_related("permission")
             .values_list(
@@ -27,7 +32,23 @@ def _load_perms(user):
                 "permission__codename",
             )
         )
-        user._piquano_perms = {f"{app}.{module}.{code}" for app, module, code in qs}
+        perms = {f"{app}.{module}.{code}" for app, module, code in user_qs}
+
+        # Team-level permissions (if user belongs to a team)
+        team_id = getattr(user, "team_id", None)
+        if team_id:
+            team_qs = (
+                TeamPermission.objects.filter(team_id=team_id, is_granted=True)
+                .select_related("permission")
+                .values_list(
+                    "permission__app_label",
+                    "permission__module_name",
+                    "permission__codename",
+                )
+            )
+            perms |= {f"{app}.{module}.{code}" for app, module, code in team_qs}
+
+        user._piquano_perms = perms
     return user._piquano_perms
 
 

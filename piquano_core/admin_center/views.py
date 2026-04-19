@@ -13,7 +13,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
 from .defaults import APP_LABELS, MODULE_LABELS, PERMISSION_LABELS
-from .models import FeatureToggle, Permission, UserPermission
+from .models import FeatureToggle, Permission, TeamPermission, UserPermission
 
 
 def _get_own_app() -> str | None:
@@ -218,6 +218,152 @@ def save_user_permissions(request, user_id):
         f"Berechtigungen fuer {target_user.get_full_name() or target_user.username} gespeichert.",
     )
     return redirect("piquano_admin_center:user_permissions", user_id=user_id)
+
+
+@_staff_required
+def team_permission_overview(request):
+    """Liste aller Teams mit Anzahl zugewiesener Permissions."""
+    # Teams kommen aus der consumer-App (CRM hat Team-Model, andere nicht).
+    # Wir lesen nur die team_ids aus TeamPermission.
+    from django.contrib.auth import get_user_model
+
+    UserModel = get_user_model()
+
+    # Teams aus User-Tabelle (alle team_ids die vergeben sind)
+    team_ids_from_users = set(
+        UserModel.objects.exclude(team_id__isnull=True)
+        .values_list("team_id", flat=True)
+        .distinct()
+    ) if hasattr(UserModel, "team") else set()
+
+    # Teams aus TeamPermission (könnten auch Teams ohne User haben)
+    team_ids_from_perms = set(
+        TeamPermission.objects.values_list("team_id", flat=True).distinct()
+    )
+
+    all_team_ids = team_ids_from_users | team_ids_from_perms
+
+    # Team-Namen laden falls Team-Model existiert
+    team_names = {}
+    if hasattr(UserModel, "team"):
+        TeamModel = UserModel.team.field.related_model
+        for t in TeamModel.objects.filter(pk__in=all_team_ids):
+            team_names[t.pk] = t.name
+
+    team_data = []
+    for tid in sorted(all_team_ids, key=lambda x: team_names.get(x, str(x))):
+        perm_count = TeamPermission.objects.filter(team_id=tid, is_granted=True).count()
+        member_count = UserModel.objects.filter(team_id=tid, is_active=True).count() if hasattr(UserModel, "team") else 0
+        team_data.append({
+            "id": tid,
+            "name": team_names.get(tid, str(tid)),
+            "perm_count": perm_count,
+            "member_count": member_count,
+        })
+
+    return render(
+        request,
+        "piquano_admin_center/team_permission_overview.html",
+        {"team_data": team_data},
+    )
+
+
+@_staff_required
+def team_permissions(request, team_id):
+    """Matrix-View: Permissions als Checkboxen fuer ein Team."""
+    import uuid as _uuid
+
+    team_uuid = _uuid.UUID(str(team_id))
+    own_app = _get_own_app()
+    permissions = (
+        Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
+    )
+
+    granted_ids = set(
+        TeamPermission.objects.filter(team_id=team_uuid, is_granted=True).values_list(
+            "permission_id", flat=True
+        )
+    )
+
+    # Team-Name laden
+    team_name = str(team_uuid)
+    try:
+        from django.contrib.auth import get_user_model
+        UserModel = get_user_model()
+        if hasattr(UserModel, "team"):
+            TeamModel = UserModel.team.field.related_model
+            team_obj = TeamModel.objects.filter(pk=team_uuid).first()
+            if team_obj:
+                team_name = team_obj.name
+    except Exception:
+        pass
+
+    grouped: dict[str, dict] = {}
+    for perm in permissions:
+        if perm.app_label not in grouped:
+            grouped[perm.app_label] = {
+                "label": _app_label(perm.app_label),
+                "modules": defaultdict(list),
+            }
+        grouped[perm.app_label]["modules"][perm.module_name].append(
+            {
+                "id": str(perm.id),
+                "codename": perm.codename,
+                "codename_label": _perm_label(perm.codename),
+                "module_label": _module_label(perm.app_label, perm.module_name),
+                "granted": perm.id in granted_ids,
+            }
+        )
+
+    codename_order = {"read": 0, "write": 1, "delete": 2}
+    grouped_sorted = {}
+    for app, data in sorted(grouped.items()):
+        sorted_modules = {}
+        for module, perms in sorted(data["modules"].items()):
+            sorted_modules[module] = sorted(perms, key=lambda p: codename_order.get(p["codename"], 9))
+        grouped_sorted[app] = {"label": data["label"], "modules": sorted_modules}
+
+    return render(
+        request,
+        "piquano_admin_center/team_permissions.html",
+        {
+            "team_id": team_uuid,
+            "team_name": team_name,
+            "grouped_permissions": grouped_sorted,
+        },
+    )
+
+
+@require_POST
+@_staff_required
+def save_team_permissions(request, team_id):
+    """Bulk-Update der TeamPermission-Eintraege."""
+    import uuid as _uuid
+
+    team_uuid = _uuid.UUID(str(team_id))
+    granted_perm_ids = set(request.POST.getlist("permissions"))
+    own_app = _get_own_app()
+    all_permissions = (
+        Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
+    )
+
+    for perm in all_permissions:
+        should_grant = str(perm.id) in granted_perm_ids
+        tp, created = TeamPermission.objects.get_or_create(
+            team_id=team_uuid,
+            permission=perm,
+            defaults={
+                "is_granted": should_grant,
+                "granted_by": request.user.username,
+            },
+        )
+        if not created and tp.is_granted != should_grant:
+            tp.is_granted = should_grant
+            tp.granted_by = request.user.username
+            tp.save(update_fields=["is_granted", "granted_by"])
+
+    messages.success(request, f"Team-Berechtigungen gespeichert.")
+    return redirect("piquano_admin_center:team_permissions", team_id=team_uuid)
 
 
 @_staff_required

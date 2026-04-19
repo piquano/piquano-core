@@ -79,3 +79,33 @@ class UserPermission(models.Model):
     def __str__(self):
         status = "JA" if self.is_granted else "NEIN"
         return f"{self.user} -> {self.permission} [{status}]"
+
+
+class TeamPermission(models.Model):
+    """Berechtigung auf Team-Ebene. Alle Mitglieder erben diese Permissions."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    team_id = models.UUIDField(
+        verbose_name="Team",
+        help_text="UUID des Teams (FK ohne DB-Constraint, da Team in consumer-App lebt)",
+    )
+    permission = models.ForeignKey(
+        Permission,
+        on_delete=models.CASCADE,
+        related_name="team_assignments",
+        verbose_name="Berechtigung",
+    )
+    is_granted = models.BooleanField("Erteilt", default=True)
+    granted_at = models.DateTimeField("Erteilt am", auto_now_add=True)
+    granted_by = models.CharField("Erteilt von", max_length=150, blank=True)
+
+    class Meta:
+        db_table = "piquano_admin_center_teampermission"
+        unique_together = [("team_id", "permission")]
+        verbose_name = "Team-Berechtigung"
+        verbose_name_plural = "Team-Berechtigungen"
+        ordering = ["team_id", "permission"]
+
+    def __str__(self):
+        status = "JA" if self.is_granted else "NEIN"
+        return f"Team {self.team_id} -> {self.permission} [{status}]"

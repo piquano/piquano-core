@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Team-Berechtigungen -- Admin-Center{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Team-Berechtigungen</h1>
+</div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="teams" %}
+
+{% if team_data %}
+<div class="card">
+    <div class="card-body" style="padding:0;">
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Team</th>
+                    <th style="text-align:center;">Mitglieder</th>
+                    <th style="text-align:center;">Berechtigungen</th>
+                    <th style="text-align:right;">Aktion</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in team_data %}
+                <tr>
+                    <td><strong>{{ t.name }}</strong></td>
+                    <td style="text-align:center;">
+                        <span class="badge badge-gray">{{ t.member_count }}</span>
+                    </td>
+                    <td style="text-align:center;">
+                        {% if t.perm_count > 0 %}
+                        <span class="badge badge-green">{{ t.perm_count }}</span>
+                        {% else %}
+                        <span class="badge badge-gray">0</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align:right;">
+                        <a href="{% url 'piquano_admin_center:team_permissions' t.id %}" class="btn btn-primary btn-sm">Bearbeiten</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="text-align:center; padding:48px; color:#64748b;">
+        <p>Noch keine Teams vorhanden. Erstelle Teams unter <strong>Benutzer &rarr; Teams</strong>, dann erscheinen sie hier.</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -2,6 +2,7 @@
     <a href="{% url 'piquano_admin_center:dashboard' %}" class="btn {% if nav_active == 'dashboard' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Dashboard</a>
     <a href="{% url 'piquano_admin_center:toggles' %}" class="btn {% if nav_active == 'toggles' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Feature-Toggles</a>
     <a href="{% url 'piquano_admin_center:permissions' %}" class="btn {% if nav_active == 'permissions' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Berechtigungen</a>
+    <a href="{% url 'piquano_admin_center:team_permissions_overview' %}" class="btn {% if nav_active == 'teams' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Teams</a>
     <a href="{% url 'piquano_admin_center:system_status' %}" class="btn {% if nav_active == 'system' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">System-Status</a>
     <a href="{% url 'piquano_admin_center:docs_admin' %}" class="btn {% if nav_active == 'docs_admin' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">Admin-Handbuch</a>
     <a href="{% url 'piquano_admin_center:docs_tom' %}" class="btn {% if nav_active == 'docs_tom' %}btn-primary{% else %}btn-secondary{% endif %}" style="font-size:13px; padding:6px 14px;">TOM</a>
