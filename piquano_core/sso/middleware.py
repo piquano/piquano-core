@@ -124,6 +124,20 @@ class AutheliaRemoteUserMiddleware:
         """
         return None
 
+    def _get_default_team(self):
+        """Return the default team for new users, or None.
+
+        Reads PIQUANO_AUTH_DEFAULT_TEAM from settings (team name).
+        """
+        default_team_name = getattr(settings, "PIQUANO_AUTH_DEFAULT_TEAM", "")
+        if not default_team_name:
+            return None
+        try:
+            TeamModel = self.User.team.field.related_model
+            return TeamModel.objects.filter(name=default_team_name).first()
+        except Exception:
+            return None
+
     # ----- internals ----------------------------------------------------------
 
     def _authenticate(self, profile: AutheliaProfile):
@@ -161,6 +175,12 @@ class AutheliaRemoteUserMiddleware:
                 if role is not None and hasattr(user, "role"):
                     user.role = role
                     update_fields.append("role")
+                # Assign default team if user model has a team field
+                if hasattr(user, "team") and user.team_id is None:
+                    default_team = self._get_default_team()
+                    if default_team is not None:
+                        user.team = default_team
+                        update_fields.append("team")
                 user.save(update_fields=update_fields)
                 # Assign default permissions (read + write)
                 try:
