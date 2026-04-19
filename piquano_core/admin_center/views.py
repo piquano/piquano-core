@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+import logging
 from collections import defaultdict
+
+logger = logging.getLogger(__name__)
 
 from django.conf import settings as django_settings
 from django.contrib import messages
@@ -228,9 +231,10 @@ def team_permission_overview(request):
     from django.contrib.auth import get_user_model
 
     UserModel = get_user_model()
-
     team_data = []
+
     if hasattr(UserModel, "team"):
+        # Local Team model (CRM)
         TeamModel = UserModel.team.field.related_model
         for t in TeamModel.objects.all().order_by("name"):
             perm_count = TeamPermission.objects.filter(team_id=t.pk, is_granted=True).count()
@@ -241,6 +245,25 @@ def team_permission_overview(request):
                 "perm_count": perm_count,
                 "member_count": member_count,
             })
+    else:
+        # No local Team model (ATS, App) — fetch from CRM API
+        try:
+            from piquano_core.crm_client import CRMClient, CRMClientError
+
+            client = CRMClient.from_settings()
+            teams = client.list_teams()
+            for t in teams:
+                tid = t.get("id")
+                if tid:
+                    perm_count = TeamPermission.objects.filter(team_id=tid, is_granted=True).count()
+                    team_data.append({
+                        "id": tid,
+                        "name": t.get("name", str(tid)),
+                        "perm_count": perm_count,
+                        "member_count": "-",
+                    })
+        except Exception:
+            logger.warning("Could not fetch teams from CRM API", exc_info=True)
 
     return render(
         request,
@@ -266,7 +289,7 @@ def team_permissions(request, team_id):
         )
     )
 
-    # Team-Name laden
+    # Team-Name laden (lokal oder via CRM-API)
     team_name = str(team_uuid)
     try:
         from django.contrib.auth import get_user_model
@@ -276,6 +299,12 @@ def team_permissions(request, team_id):
             team_obj = TeamModel.objects.filter(pk=team_uuid).first()
             if team_obj:
                 team_name = team_obj.name
+        else:
+            from piquano_core.crm_client import CRMClient
+            for t in CRMClient.from_settings().list_teams():
+                if str(t.get("id")) == str(team_uuid):
+                    team_name = t.get("name", team_name)
+                    break
     except Exception:
         pass
 

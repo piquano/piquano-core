@@ -223,6 +223,17 @@ class CRMClient:
             raise CRMClientError("unexpected response shape from /api/users/")
         return data["results"]
 
+    # ----- teams --------------------------------------------------------------
+
+    def list_teams(self) -> list[dict]:
+        """Fetch all teams from the CRM."""
+        data = self._request("GET", "api/teams/", cache_key="teams:all")
+        if isinstance(data, dict) and "results" in data:
+            return data["results"]
+        if isinstance(data, list):
+            return data
+        raise CRMClientError("unexpected response shape from /api/teams/")
+
     # ----- contacts (stubs — Phase 0.C will harden these) ---------------------
 
     def get_contact(self, contact_id: int) -> dict:
