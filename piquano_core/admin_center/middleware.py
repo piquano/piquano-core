@@ -45,9 +45,9 @@ def _check_perm(user, codename: str) -> bool:
     """Check if user has a specific permission.
 
     codename format: "app.module.action" e.g. "crm.deals.write"
-    Superusers and staff users (admins) always have all permissions.
+    Superusers, staff users, and Authelia admins always have all permissions.
     """
-    if user.is_superuser or user.is_staff:
+    if user.is_superuser or user.is_staff or getattr(user, "_piquano_is_admin", False):
         return True
     perms = _load_perms(user)
     return codename in perms
@@ -67,6 +67,15 @@ class PiquanoPermissionMiddleware:
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         if hasattr(request, "user") and request.user.is_authenticated:
+            # Read Authelia admin group directly from header — survives
+            # enrich_from_crm overwriting is_staff.
+            from django.conf import settings
+
+            admin_group = getattr(settings, "PIQUANO_AUTH_ADMIN_GROUP", "admins")
+            groups_raw = request.META.get("HTTP_REMOTE_GROUPS", "")
+            groups = {g.strip() for g in groups_raw.split(",") if g.strip()}
+            request.user._piquano_is_admin = admin_group in groups
+
             request.user._piquano_perms = None
             request.user._piquano_toggles = None
             request.user.has_piquano_perm = lambda codename: _check_perm(request.user, codename)
