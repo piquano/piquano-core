@@ -152,3 +152,11 @@ class AutheliaCRMRemoteUserMiddleware(AutheliaRemoteUserMiddleware):
         if update_fields:
             user.save(update_fields=update_fields)
             logger.debug("CRM-enriched %s: %s", profile.username, ", ".join(update_fields))
+
+        # ----- team_id (in-memory only, for TeamPermission lookup) --------
+        # If the CRM response includes a team.id, set it on the user object
+        # so PiquanoPermissionMiddleware can load team permissions.
+        # Not persisted — the local User model may not have a team field.
+        team_data = data.get("team")
+        if isinstance(team_data, dict) and team_data.get("id"):
+            user.team_id = team_data["id"]
