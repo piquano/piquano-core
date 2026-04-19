@@ -42,7 +42,7 @@ def piquano_context(request):
     ctx = {
         "piquano_permissions": set(),
         "piquano_toggles": _ToggleDict(),
-        "perms_check": _ToggleDict(),
+        "perms_check": _PermDict(),
     }
 
     if (
