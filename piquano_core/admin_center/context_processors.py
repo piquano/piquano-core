@@ -19,14 +19,14 @@ class _ToggleDict(dict):
 
 
 class _PermDict(dict):
-    """Dict for permissions. Default: False (denied unless explicitly granted). Superusers get True."""
+    """Dict for permissions. Default: False (denied unless explicitly granted). Admins get True."""
 
-    _superuser = False
+    _bypass = False
 
     def __getattr__(self, key):
         if key.startswith("_"):
             return super().__getattribute__(key)
-        if self._superuser:
+        if self._bypass:
             return True
         return self.get(key, False)
 
@@ -57,7 +57,11 @@ def piquano_context(request):
 
         # Template-friendly: "ats.candidates.read" → perms_check.ats_candidates_read = True
         perms_dict = _PermDict()
-        perms_dict._superuser = getattr(request.user, "is_superuser", False)
+        perms_dict._bypass = (
+            getattr(request.user, "is_superuser", False)
+            or getattr(request.user, "is_staff", False)
+            or getattr(request.user, "_piquano_is_admin", False)
+        )
         for p in perm_set:
             perms_dict[p.replace(".", "_")] = True
         ctx["perms_check"] = perms_dict
