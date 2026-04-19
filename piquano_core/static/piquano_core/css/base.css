@@ -240,6 +240,43 @@ a:hover { text-decoration: underline; }
 }
 .sidebar-overlay.open { display: block; }
 
+/* ── Tables ─────────────────────────────────────────────────────────── */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--piquano-fs-sm, 14px);
+}
+
+thead th {
+  background: var(--piquano-bg, #f8fafc);
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--piquano-text-muted, #64748b);
+  border-bottom: 1px solid var(--piquano-border, #e2e8f0);
+  letter-spacing: 0.04em;
+}
+
+tbody td {
+  padding: 12px 16px;
+  color: var(--piquano-text-muted, #334155);
+  border-bottom: 1px solid var(--piquano-border, #e2e8f0);
+}
+
+tbody tr:hover {
+  background: var(--piquano-primary-50, #f1f5f9);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+td a {
+  font-weight: 500;
+}
+
 @media (max-width: 900px) {
   /* Sidebar: off-screen, slide in on .open */
   .pq-sidebar {
