@@ -229,37 +229,18 @@ def team_permission_overview(request):
 
     UserModel = get_user_model()
 
-    # Teams aus User-Tabelle (alle team_ids die vergeben sind)
-    team_ids_from_users = set(
-        UserModel.objects.exclude(team_id__isnull=True)
-        .values_list("team_id", flat=True)
-        .distinct()
-    ) if hasattr(UserModel, "team") else set()
-
-    # Teams aus TeamPermission (könnten auch Teams ohne User haben)
-    team_ids_from_perms = set(
-        TeamPermission.objects.values_list("team_id", flat=True).distinct()
-    )
-
-    all_team_ids = team_ids_from_users | team_ids_from_perms
-
-    # Team-Namen laden falls Team-Model existiert
-    team_names = {}
+    team_data = []
     if hasattr(UserModel, "team"):
         TeamModel = UserModel.team.field.related_model
-        for t in TeamModel.objects.filter(pk__in=all_team_ids):
-            team_names[t.pk] = t.name
-
-    team_data = []
-    for tid in sorted(all_team_ids, key=lambda x: team_names.get(x, str(x))):
-        perm_count = TeamPermission.objects.filter(team_id=tid, is_granted=True).count()
-        member_count = UserModel.objects.filter(team_id=tid, is_active=True).count() if hasattr(UserModel, "team") else 0
-        team_data.append({
-            "id": tid,
-            "name": team_names.get(tid, str(tid)),
-            "perm_count": perm_count,
-            "member_count": member_count,
-        })
+        for t in TeamModel.objects.all().order_by("name"):
+            perm_count = TeamPermission.objects.filter(team_id=t.pk, is_granted=True).count()
+            member_count = UserModel.objects.filter(team_id=t.pk, is_active=True).count()
+            team_data.append({
+                "id": t.pk,
+                "name": t.name,
+                "perm_count": perm_count,
+                "member_count": member_count,
+            })
 
     return render(
         request,
