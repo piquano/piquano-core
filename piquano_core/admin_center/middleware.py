@@ -45,9 +45,9 @@ def _check_perm(user, codename: str) -> bool:
     """Check if user has a specific permission.
 
     codename format: "app.module.action" e.g. "crm.deals.write"
-    Superusers always have all permissions.
+    Superusers and staff users (admins) always have all permissions.
     """
-    if user.is_superuser:
+    if user.is_superuser or user.is_staff:
         return True
     perms = _load_perms(user)
     return codename in perms
