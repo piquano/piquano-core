@@ -12,6 +12,23 @@ from django.utils import timezone
 from .models import SharedNote, SharedEmail, SharedActivity
 
 
+def _strip_html(html):
+    """Strip HTML tags and collapse whitespace for plaintext display."""
+    if not html:
+        return ""
+    import re
+    text = re.sub(r"<br\s*/?>", "\n", html, flags=re.IGNORECASE)
+    text = re.sub(r"</(p|div|tr|li)>", "\n", text, flags=re.IGNORECASE)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = re.sub(r"&nbsp;", " ", text)
+    text = re.sub(r"&amp;", "&", text)
+    text = re.sub(r"&lt;", "<", text)
+    text = re.sub(r"&gt;", ">", text)
+    text = re.sub(r"&quot;", '"', text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def _date_group(dt):
     """Return a human-readable date group label."""
     today = timezone.localdate()
@@ -57,7 +74,9 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50):
             "date_group": _date_group(n.created_at),
             "text": n.text,
             "author": n.created_by_name or "System",
+            "author_email": n.created_by_email or "",
             "source": n.app_source,
+            "note_id": str(n.pk),
             "extra": {"note_type": n.note_type, "note_type_label": _note_type_label(n.note_type)},
         })
 
@@ -68,7 +87,7 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50):
             "type": "email",
             "date": dt,
             "date_group": _date_group(dt),
-            "text": e.body_text or e.body_html or "",
+            "text": e.body_text or _strip_html(e.body_html) or "",
             "subject": e.subject,
             "author": e.sent_by_name or e.from_name or e.from_email,
             "source": e.app_source,
@@ -91,7 +110,12 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50):
             "subject": a.subject,
             "author": a.performed_by_name or "System",
             "source": a.app_source,
-            "extra": {"activity_type": a.activity_type},
+            "activity_id": str(a.pk),
+            "extra": {
+                "activity_type": a.activity_type,
+                "due_date": a.due_date.strftime("%d.%m.%Y %H:%M") if a.due_date else "",
+                "is_done": a.is_done,
+            },
         })
 
     # Sort all entries by date descending

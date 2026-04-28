@@ -1,0 +1,22 @@
+{# App-Switcher — Icon-Leiste im Sidebar-Header #}
+<nav class="app-switcher-sidebar" aria-label="Apps">
+    <a href="https://app.piquano.com" class="app-switcher-sidebar__icon{% if pq_topbar.app_id == 'app' %} is-active{% endif %}" title="Hub">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+    </a>
+    <a href="https://crm.piquano.com" class="app-switcher-sidebar__icon{% if pq_topbar.app_id == 'crm' %} is-active{% endif %}" title="CRM">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+    </a>
+    <a href="https://ats.piquano.com" class="app-switcher-sidebar__icon{% if pq_topbar.app_id == 'ats' %} is-active{% endif %}" title="ATS">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2M3.41 7.41A2 2 0 013 6V6a2 2 0 012-2h14a2 2 0 012 2v0a2 2 0 01-.41 1.41M3 8v11a2 2 0 002 2h14a2 2 0 002-2V8"/></svg>
+        {% firstof ats_new_applications_count new_applications_count as badge_count %}
+        {% if badge_count %}<span class="app-switcher-sidebar__badge">{{ badge_count }}</span>{% endif %}
+    </a>
+    <a href="https://lms.piquano.com" class="app-switcher-sidebar__icon{% if pq_topbar.app_id == 'lms' %} is-active{% endif %}" title="LMS">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6.5"/></svg>
+    </a>
+    {% if request.user.is_staff or request.user.is_superuser %}
+    <a href="https://support.piquano.com" class="app-switcher-sidebar__icon{% if pq_topbar.app_id == 'support' %} is-active{% endif %}" title="Support">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 11-12.728 0M12 3v0m-4.95 1.05v0M5.636 8.636v0M5 12v0m.636 3.364v0M8.05 18.95v0M12 21v0m3.95-2.05v0m2.414-2.586v0M19 12v0m-.636-3.364v0M15.95 5.05v0"/><circle cx="12" cy="12" r="3"/></svg>
+    </a>
+    {% endif %}
+</nav>
