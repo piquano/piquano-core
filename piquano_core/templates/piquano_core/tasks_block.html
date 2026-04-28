@@ -1,5 +1,6 @@
 {# Anstehende Aufgaben — Dashboard Card (passt in grid-2) #}
 {% if tasks_total %}
+<style>.task-row a:hover{text-decoration:underline!important;color:var(--piquano-button)!important;}</style>
 <div class="card task-card">
   <div class="card-header">
     <h2>Aufgaben <span style="background:var(--piquano-button); color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:10px; margin-left:6px;">{{ tasks_total }}</span></h2>
@@ -12,7 +13,7 @@
   <div class="task-row" id="task-{{ t.pk }}" style="display:flex; align-items:center; gap:10px; padding:7px 16px 7px 13px; border-bottom:1px solid #f3f4f6; border-left:3px solid var(--piquano-danger);">
     <input type="checkbox" style="width:16px; height:16px; accent-color:var(--piquano-button); cursor:pointer; flex-shrink:0;" onchange="markTaskDone('{{ t.pk }}', this)">
     <span style="color:var(--piquano-danger); font-size:12px; font-weight:600; white-space:nowrap; min-width:48px;">{{ t.due_date|date:"d.m." }}</span>
-    <span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>
+    {% if t.ats_candidate_id %}<a href="/kandidaten/{{ t.ats_candidate_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% elif t.crm_contact_id %}<a href="/contacts/{{ t.crm_contact_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% else %}<span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>{% endif %}
     <span style="color:var(--piquano-text-muted); font-size:11px; white-space:nowrap;">{{ t.assigned_to_name|default:t.performed_by_name }}</span>
   </div>
   {% endfor %}
@@ -24,7 +25,7 @@
   <div class="task-row" id="task-{{ t.pk }}" style="display:flex; align-items:center; gap:10px; padding:7px 16px 7px 13px; border-bottom:1px solid #f3f4f6; border-left:3px solid var(--piquano-warning);">
     <input type="checkbox" style="width:16px; height:16px; accent-color:var(--piquano-button); cursor:pointer; flex-shrink:0;" onchange="markTaskDone('{{ t.pk }}', this)">
     <span style="color:var(--piquano-warning); font-size:12px; font-weight:600; white-space:nowrap; min-width:48px;">{{ t.due_date|date:"d.m." }}</span>
-    <span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>
+    {% if t.ats_candidate_id %}<a href="/kandidaten/{{ t.ats_candidate_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% elif t.crm_contact_id %}<a href="/contacts/{{ t.crm_contact_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% else %}<span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>{% endif %}
     <span style="color:var(--piquano-text-muted); font-size:11px; white-space:nowrap;">{{ t.assigned_to_name|default:t.performed_by_name }}</span>
   </div>
   {% endfor %}
@@ -36,7 +37,7 @@
   <div class="task-row" id="task-{{ t.pk }}" style="display:flex; align-items:center; gap:10px; padding:7px 16px 7px 13px; border-bottom:1px solid #f3f4f6; border-left:3px solid var(--piquano-button);">
     <input type="checkbox" style="width:16px; height:16px; accent-color:var(--piquano-button); cursor:pointer; flex-shrink:0;" onchange="markTaskDone('{{ t.pk }}', this)">
     <span style="color:var(--piquano-text-muted); font-size:12px; white-space:nowrap; min-width:48px;">{{ t.due_date|date:"d.m." }}</span>
-    <span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>
+    {% if t.ats_candidate_id %}<a href="/kandidaten/{{ t.ats_candidate_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% elif t.crm_contact_id %}<a href="/contacts/{{ t.crm_contact_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% else %}<span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>{% endif %}
     <span style="color:var(--piquano-text-muted); font-size:11px; white-space:nowrap;">{{ t.assigned_to_name|default:t.performed_by_name }}</span>
   </div>
   {% endfor %}
@@ -48,7 +49,7 @@
   <div class="task-row" id="task-{{ t.pk }}" style="display:flex; align-items:center; gap:10px; padding:7px 16px 7px 13px; border-bottom:1px solid #f3f4f6; border-left:3px solid #d1d5db;">
     <input type="checkbox" style="width:16px; height:16px; accent-color:var(--piquano-button); cursor:pointer; flex-shrink:0;" onchange="markTaskDone('{{ t.pk }}', this)">
     <span style="color:var(--piquano-text-muted); font-size:12px; white-space:nowrap; min-width:48px;">{{ t.due_date|date:"d.m." }}</span>
-    <span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>
+    {% if t.ats_candidate_id %}<a href="/kandidaten/{{ t.ats_candidate_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% elif t.crm_contact_id %}<a href="/contacts/{{ t.crm_contact_id }}/" style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1; text-decoration:none;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</a>{% else %}<span style="color:var(--piquano-text); font-size:13px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; flex:1;" title="{{ t.subject }}">{{ t.subject|default:"(ohne Titel)" }}</span>{% endif %}
     <span style="color:var(--piquano-text-muted); font-size:11px; white-space:nowrap;">{{ t.assigned_to_name|default:t.performed_by_name }}</span>
   </div>
   {% endfor %}
