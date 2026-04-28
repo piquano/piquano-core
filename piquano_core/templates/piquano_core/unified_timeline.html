@@ -126,6 +126,17 @@
             <textarea name="notes" id="utlActivityNotes" class="utl-input utl-input--textarea" rows="2"
                       placeholder="Optionale Notizen..."></textarea>
           </div>
+          {% if assignable_users %}
+          <div class="utl-field" id="utlAssignField" style="display:none;">
+            <label class="utl-field__label" for="utlAssignTo">Zuweisen an</label>
+            <select name="assigned_to" id="utlAssignTo" class="utl-input utl-input--select">
+              <option value="">— nicht zuweisen —</option>
+              {% for u in assignable_users %}
+              <option value="{{ u.pk }}">{{ u.get_full_name|default:u.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          {% endif %}
         </div>
         <div class="utl-panel__actions">
           <button type="button" class="utl-btn utl-btn--ghost" onclick="utlClosePanel()">Abbrechen</button>
@@ -1450,6 +1461,17 @@
       utlClosePanel();
     }
   });
+
+  /* ── Zuweisen-Feld nur bei Aufgabe zeigen ── */
+  var typeSelect = document.getElementById('utlActivityType');
+  var assignField = document.getElementById('utlAssignField');
+  if (typeSelect && assignField) {
+    function toggleAssignField() {
+      assignField.style.display = typeSelect.value === 'task' ? '' : 'none';
+    }
+    typeSelect.addEventListener('change', toggleAssignField);
+    toggleAssignField();
+  }
 
 })();
 </script>
