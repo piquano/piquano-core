@@ -110,12 +110,18 @@ def _mirror_ats_activity(sender, instance, created, **kwargs):
         return
     try:
         from piquano_core.shared.models import SharedActivity
+        person_name = ""
+        if instance.candidate:
+            first = getattr(instance.candidate, "first_name", "") or ""
+            last = getattr(instance.candidate, "last_name", "") or ""
+            person_name = f"{first} {last}".strip()
         SharedActivity.objects.create(
             app_source="ats",
             activity_type=instance.activity_type,
             description=instance.description,
             performed_by_name=instance.performed_by or "System",
             extra=instance.extra or {},
+            related_name=person_name,
             ats_candidate_id=instance.candidate_id,
             ats_application_id=instance.application_id,
             crm_contact_id=getattr(instance.candidate, "crm_contact_id", None) if instance.candidate else None,
@@ -142,6 +148,12 @@ def _mirror_crm_activity(sender, instance, created, **kwargs):
         if instance.assigned_to:
             assigned = instance.assigned_to.get_full_name() or instance.assigned_to.username
 
+        person_name = ""
+        if instance.contact:
+            first = getattr(instance.contact, "first_name", "") or ""
+            last = getattr(instance.contact, "last_name", "") or ""
+            person_name = f"{first} {last}".strip()
+
         SharedActivity.objects.create(
             app_source="crm",
             activity_type=type_map.get(type_name, "task"),
@@ -152,6 +164,7 @@ def _mirror_crm_activity(sender, instance, created, **kwargs):
             done_at=instance.done_at,
             performed_by_name=performed,
             assigned_to_name=assigned,
+            related_name=person_name,
             crm_contact_id=instance.contact_id,
             crm_company_id=instance.company_id,
             crm_deal_id=instance.deal_id,

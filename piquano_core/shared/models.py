@@ -195,6 +195,7 @@ class SharedActivity(models.Model):
     extra = models.JSONField(default=dict, blank=True)
 
     # Personenbezug (UUID ohne FK)
+    related_name = models.CharField("Personen-Name", max_length=200, blank=True)
     ats_candidate_id = models.UUIDField(null=True, blank=True, db_index=True)
     ats_application_id = models.UUIDField(null=True, blank=True, db_index=True)
     crm_contact_id = models.UUIDField(null=True, blank=True, db_index=True)
