@@ -30,11 +30,13 @@ MODULE_LABELS = {
     "crm.timeline": "Timeline",
     "crm.accounts": "Benutzerverwaltung",
     "crm.projektabrechnung": "Projektabrechnung",
+    "crm.partner_pipeline": "Partner-Pipeline",
     # ATS
     "ats.candidates": "Kandidaten",
     "ats.jobs": "Projekte & Ausschreibungen",
     "ats.careers": "Karriereseite",
     "ats.mail": "E-Mail-Postfach",
+    "ats.mail_templates": "E-Mail-Vorlagen",
     "ats.reports": "Berichte",
     "ats.pipeline": "Pipeline-Board",
     # App
@@ -79,12 +81,14 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "timeline": ["read"],
         "accounts": ["read", "write", "delete"],
         "projektabrechnung": ["read", "write"],
+        "partner_pipeline": ["read"],
     },
     "ats": {
         "candidates": ["read", "write", "delete"],
         "jobs": ["read", "write", "delete"],
         "careers": ["read", "write"],
         "mail": ["read", "write"],
+        "mail_templates": ["read", "write"],
         "reports": ["read"],
         "pipeline": ["read", "write"],
     },
