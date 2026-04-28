@@ -87,7 +87,7 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50):
             "type": "email",
             "date": dt,
             "date_group": _date_group(dt),
-            "text": e.body_text or _strip_html(e.body_html) or "",
+            "text": _strip_html(e.body_html) or e.body_text or "",
             "subject": e.subject,
             "author": e.sent_by_name or e.from_name or e.from_email,
             "source": e.app_source,
