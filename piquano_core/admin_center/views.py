@@ -139,19 +139,47 @@ def permission_overview(request):
 
 @_staff_required
 def user_permissions(request, user_id):
-    """Matrix-View: Permissions der eigenen App als Checkboxen fuer einen User."""
+    """Matrix-View: Permissions der eigenen App als Checkboxen fuer einen User.
+
+    Shows both direct user permissions (editable) and inherited team
+    permissions (read-only). A user denial (unchecked) overrides a team grant.
+    """
     target_user = get_object_or_404(User, pk=user_id)
     own_app = _get_own_app()
     permissions = (
         Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
     )
 
-    # Current grants for this user
-    granted_ids = set(
-        UserPermission.objects.filter(user=target_user, is_granted=True).values_list(
-            "permission_id", flat=True
+    # Direct user grants and denials
+    user_perms = dict(
+        UserPermission.objects.filter(user=target_user).values_list(
+            "permission_id", "is_granted"
         )
     )
+    user_granted_ids = {pid for pid, granted in user_perms.items() if granted}
+    user_denied_ids = {pid for pid, granted in user_perms.items() if not granted}
+
+    # Team grants (inherited)
+    # Try local team FK first, then fall back to CRM API (for non-CRM apps
+    # where User model has no team field but CRM is the team master).
+    team_granted_ids = set()
+    team_id = getattr(target_user, "team_id", None)
+    if not team_id:
+        try:
+            from piquano_core.crm_client import CRMClient, CRMClientError
+
+            data = CRMClient.from_settings().get_user(target_user.username)
+            team_data = data.get("team")
+            if isinstance(team_data, dict) and team_data.get("id"):
+                team_id = team_data["id"]
+        except Exception:
+            pass
+    if team_id:
+        team_granted_ids = set(
+            TeamPermission.objects.filter(team_id=team_id, is_granted=True).values_list(
+                "permission_id", flat=True
+            )
+        )
 
     # Group by app_label > module_name
     grouped: dict[str, dict] = {}
@@ -161,17 +189,26 @@ def user_permissions(request, user_id):
                 "label": _app_label(perm.app_label),
                 "modules": defaultdict(list),
             }
+
+        # Effective state: user explicit > team inherited
+        from_team = perm.id in team_granted_ids
+        from_user = perm.id in user_granted_ids
+        denied_by_user = perm.id in user_denied_ids
+        effective = (from_user or from_team) and not denied_by_user
+
         grouped[perm.app_label]["modules"][perm.module_name].append(
             {
                 "id": str(perm.id),
                 "codename": perm.codename,
                 "codename_label": _perm_label(perm.codename),
                 "module_label": _module_label(perm.app_label, perm.module_name),
-                "granted": perm.id in granted_ids,
+                "granted": effective,
+                "from_team": from_team,
+                "denied_by_user": denied_by_user,
             }
         )
 
-    # Sort for consistent rendering: modules alphabetically, permissions read → write → delete
+    # Sort for consistent rendering: modules alphabetically, permissions read > write > delete
     codename_order = {"read": 0, "write": 1, "delete": 2}
     grouped_sorted = {}
     for app, data in sorted(grouped.items()):
@@ -180,12 +217,30 @@ def user_permissions(request, user_id):
             sorted_modules[module] = sorted(perms, key=lambda p: codename_order.get(p["codename"], 9))
         grouped_sorted[app] = {"label": data["label"], "modules": sorted_modules}
 
+    # Team name for display
+    team_name = None
+    if team_id:
+        # Try local Team model (CRM has it), fall back to CRM API
+        try:
+            if hasattr(target_user, "team") and target_user.team:
+                team_name = target_user.team.name
+            else:
+                from piquano_core.crm_client import CRMClient
+
+                data = CRMClient.from_settings().get_user(target_user.username)
+                team_data = data.get("team")
+                if isinstance(team_data, dict):
+                    team_name = team_data.get("name")
+        except Exception:
+            team_name = str(team_id)[:8]
+
     return render(
         request,
         "piquano_admin_center/user_permissions.html",
         {
             "target_user": target_user,
             "grouped_permissions": grouped_sorted,
+            "team_name": team_name,
         },
     )
 

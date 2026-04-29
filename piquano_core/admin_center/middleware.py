@@ -14,27 +14,20 @@ if TYPE_CHECKING:
 
 
 def _load_perms(user):
-    """Load all granted permissions for user into a set of codename strings.
+    """Load effective permissions for user into a set of codename strings.
 
-    Merges user-level and team-level permissions. Team permissions are
-    loaded if the user has a ``team_id`` attribute (set by the consumer app).
+    Logic: Team permissions as base, then user-level overrides.
+    - Team grants (is_granted=True) form the base set.
+    - User grants (is_granted=True) are added.
+    - User denials (is_granted=False) are removed, even if team granted.
+    This allows revoking individual permissions at the user level.
     """
     if user._piquano_perms is None:
         from .models import TeamPermission, UserPermission
 
-        # User-level permissions
-        user_qs = (
-            UserPermission.objects.filter(user=user, is_granted=True)
-            .select_related("permission")
-            .values_list(
-                "permission__app_label",
-                "permission__module_name",
-                "permission__codename",
-            )
-        )
-        perms = {f"{app}.{module}.{code}" for app, module, code in user_qs}
+        perms = set()
 
-        # Team-level permissions (if user belongs to a team)
+        # 1. Team-level permissions as base
         team_id = getattr(user, "team_id", None)
         if team_id:
             team_qs = (
@@ -46,7 +39,25 @@ def _load_perms(user):
                     "permission__codename",
                 )
             )
-            perms |= {f"{app}.{module}.{code}" for app, module, code in team_qs}
+            perms = {f"{app}.{module}.{code}" for app, module, code in team_qs}
+
+        # 2. User-level overrides: grants add, denials remove
+        user_qs = (
+            UserPermission.objects.filter(user=user)
+            .select_related("permission")
+            .values_list(
+                "permission__app_label",
+                "permission__module_name",
+                "permission__codename",
+                "is_granted",
+            )
+        )
+        for app, module, code, granted in user_qs:
+            key = f"{app}.{module}.{code}"
+            if granted:
+                perms.add(key)
+            else:
+                perms.discard(key)
 
         user._piquano_perms = perms
     return user._piquano_perms

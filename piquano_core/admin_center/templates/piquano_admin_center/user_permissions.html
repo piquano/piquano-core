@@ -13,14 +13,21 @@
 .perm-check-item input[type="checkbox"] { width:16px; height:16px; accent-color:#328cc1; cursor:pointer; }
 .select-all-label { font-size:12px; color:#64748b; display:flex; align-items:center; gap:6px; cursor:pointer; }
 .select-all-label input { width:14px; height:14px; accent-color:#328cc1; cursor:pointer; }
+.perm-team-hint { font-size:11px; color:#328cc1; margin-left:2px; }
 </style>
 
 <div class="page-header">
     <h1>Berechtigungen: {{ target_user.get_full_name|default:target_user.username }}</h1>
-    <p style="color:#64748b; margin-top:4px;">{{ target_user.email }}</p>
+    <p style="color:#64748b; margin-top:4px;">{{ target_user.email }}{% if team_name %} &middot; Team: <strong>{{ team_name }}</strong>{% endif %}</p>
 </div>
 
 {% include "piquano_admin_center/_nav.html" with nav_active="permissions" %}
+
+{% if team_name %}
+<div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 16px; margin-bottom:16px; font-size:13px; color:#1e40af;">
+    <strong>Team-Berechtigungen</strong> von "{{ team_name }}" werden vererbt. Abgehakte Berechtigungen gelten auch wenn sie vom Team kommen. Entfernen Sie den Haken, um eine Team-Berechtigung fuer diesen User zu entziehen.
+</div>
+{% endif %}
 
 <form method="post" action="{% url 'piquano_admin_center:save_permissions' target_user.id %}">
     {% csrf_token %}
@@ -46,7 +53,7 @@
                                value="{{ perm.id }}"
                                class="perm-cb app-{{ app_key }}"
                                {% if perm.granted %}checked{% endif %}>
-                        {{ perm.codename_label }}
+                        {{ perm.codename_label }}{% if perm.from_team and perm.granted %}<span class="perm-team-hint" title="Vom Team geerbt">&#9679; Team</span>{% endif %}
                     </label>
                     {% endfor %}
                 </div>
@@ -70,7 +77,6 @@ function toggleAppPerms(cb) {
         boxes[i].checked = cb.checked;
     }
 }
-// Sync "select all" checkbox state on page load
 document.querySelectorAll('.select-all-app').forEach(function(cb) {
     var app = cb.dataset.app;
     var boxes = document.querySelectorAll('.app-' + app);
