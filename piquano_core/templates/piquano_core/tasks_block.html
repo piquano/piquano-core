@@ -67,7 +67,7 @@
 function markTaskDone(taskId, checkbox) {
   var row = document.getElementById('task-' + taskId);
   var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
-  var csrfVal = csrf ? csrf.value : '';
+  var csrfVal = csrf ? csrf.value : (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
   fetch('{{ task_done_url_prefix|default:"/aufgaben/" }}' + taskId + '/done/', {
     method: 'POST',
     headers: { 'X-CSRFToken': csrfVal, 'Content-Type': 'application/json' },
