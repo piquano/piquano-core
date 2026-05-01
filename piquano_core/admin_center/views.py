@@ -258,18 +258,18 @@ def save_user_permissions(request, user_id):
 
     for perm in all_permissions:
         should_grant = str(perm.id) in granted_perm_ids
-        up, created = UserPermission.objects.get_or_create(
-            user=target_user,
-            permission=perm,
-            defaults={
-                "is_granted": should_grant,
-                "granted_by": request.user.username,
-            },
-        )
-        if not created and up.is_granted != should_grant:
-            up.is_granted = should_grant
-            up.granted_by = request.user.username
-            up.save(update_fields=["is_granted", "granted_by"])
+        if should_grant:
+            UserPermission.objects.update_or_create(
+                user=target_user,
+                permission=perm,
+                defaults={
+                    "is_granted": True,
+                    "granted_by": request.user.username,
+                },
+            )
+        else:
+            # Kein Eintrag = Team-Permission greift
+            UserPermission.objects.filter(user=target_user, permission=perm).delete()
 
     messages.success(
         request,
@@ -307,6 +307,21 @@ def team_permission_overview(request):
 
             client = CRMClient.from_settings()
             teams = client.list_teams()
+
+            # Mitglieder pro Team zählen via CRM Users-API
+            team_member_counts = {}
+            try:
+                users_resp = client._request("GET", "api/v1/users/")
+                users_list = users_resp.get("results", users_resp) if isinstance(users_resp, dict) else users_resp
+                if isinstance(users_list, list):
+                    for u in users_list:
+                        ut = u.get("team")
+                        if isinstance(ut, dict) and ut.get("id"):
+                            tid_str = str(ut["id"])
+                            team_member_counts[tid_str] = team_member_counts.get(tid_str, 0) + 1
+            except Exception:
+                pass
+
             for t in teams:
                 tid = t.get("id")
                 if tid:
@@ -315,7 +330,7 @@ def team_permission_overview(request):
                         "id": tid,
                         "name": t.get("name", str(tid)),
                         "perm_count": perm_count,
-                        "member_count": "-",
+                        "member_count": team_member_counts.get(str(tid), 0),
                     })
         except Exception:
             logger.warning("Could not fetch teams from CRM API", exc_info=True)
