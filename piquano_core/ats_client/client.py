@@ -206,6 +206,20 @@ class ATSClient:
             raise ATSClientError("unexpected response shape from /api/v1/jobs/")
         return data["results"]
 
+    # ----- applications --------------------------------------------------------
+
+    def get_job_applications(self, job_id: str) -> list[dict]:
+        """Fetch all applications for a given job, including candidate and stage."""
+        data = self._request(
+            "GET",
+            "api/v1/applications/",
+            params={"job": job_id, "page_size": 100},
+            cache_key=f"job_applications:{job_id}",
+        )
+        if not isinstance(data, dict) or "results" not in data:
+            raise ATSClientError("unexpected response shape from /api/v1/applications/")
+        return data["results"]
+
     # ----- health -------------------------------------------------------------
 
     def health(self) -> bool:
