@@ -451,6 +451,24 @@ td a {
   font-weight: 500;
 }
 
+/* ============================================================
+   Actions Bar — shared page header with buttons
+   ============================================================ */
+.actions-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--piquano-border, #e5e7eb);
+  padding: 24px 0px 20px;
+}
+.actions-left { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.actions-left h1 { font-size: 24px; font-weight: 700; margin: 0; color: var(--piquano-text); }
+.actions-count { font-size: 14px; color: var(--piquano-text-muted); }
+.actions-right { display: flex; align-items: center; gap: 8px; }
+
 @media (max-width: 900px) {
   /* Sidebar: off-screen, slide in on .open */
   .pq-sidebar {
