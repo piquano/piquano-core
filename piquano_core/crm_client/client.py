@@ -109,6 +109,7 @@ class CRMClient:
                 "Authorization": f"Token {self.api_token}",
                 "Accept": "application/json",
                 "User-Agent": "piquano-core/0.6.0",
+                "X-Forwarded-Proto": "https",
             }
         )
         retry = Retry(
