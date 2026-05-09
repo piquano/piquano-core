@@ -20,8 +20,15 @@ from .models import FeatureToggle, Permission, TeamPermission, UserPermission
 
 
 def _get_own_app() -> str | None:
-    """Return the PIQUANO_APP_NAME from settings, or None if not set."""
-    return getattr(django_settings, "PIQUANO_ADMIN_CENTER_APP", None)
+    """Return the PIQUANO_APP_NAME from settings, or None if not set.
+
+    The Hub (app_label="app") manages all apps centrally,
+    so it returns None to show everything.
+    """
+    app = getattr(django_settings, "PIQUANO_ADMIN_CENTER_APP", None)
+    if app == "app":
+        return None
+    return app
 
 
 User = get_user_model()

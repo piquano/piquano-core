@@ -14,6 +14,7 @@ APP_LABELS = {
     "app": "Piquano Hub",
     "lms": "Piquano LMS",
     "ticket": "Piquano Ticketsystem",
+    "content": "Piquano Content Studio",
 }
 
 MODULE_LABELS = {
@@ -59,6 +60,13 @@ MODULE_LABELS = {
     "ticket.categories": "Kategorien",
     "ticket.assignments": "Zuweisungen",
     "ticket.reports": "Berichte",
+    # Content
+    "content.dashboard": "Dashboard",
+    "content.posts": "Posts & Pipeline",
+    "content.calendar": "Kalender",
+    "content.templates": "Vorlagen",
+    "content.linkedin": "LinkedIn-Integration",
+    "content.analytics": "Auswertung",
 }
 
 PERMISSION_LABELS = {
@@ -114,6 +122,14 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "categories": ["read", "write"],
         "assignments": ["read", "write"],
         "reports": ["read"],
+    },
+    "content": {
+        "dashboard": ["read"],
+        "posts": ["read", "write", "delete"],
+        "calendar": ["read"],
+        "templates": ["read", "write"],
+        "linkedin": ["read", "write"],
+        "analytics": ["read"],
     },
 }
 
