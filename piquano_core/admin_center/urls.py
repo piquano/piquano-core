@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
@@ -27,4 +27,6 @@ urlpatterns = [
     path("docs/admin-handbuch/", views.docs_page, name="docs_admin", kwargs={"page": "admin_handbuch"}),
     path("docs/tom/", views.docs_page, name="docs_tom", kwargs={"page": "tom"}),
     path("docs/vvt/", views.docs_page, name="docs_vvt", kwargs={"page": "vvt"}),
+    # Internal API for central Admin Center
+    path("api/", include("piquano_core.admin_center.api_urls")),
 ]
