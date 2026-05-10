@@ -42,12 +42,15 @@ MODULE_LABELS = {
     "ats.pipeline": "Pipeline-Board",
     # App
     "app.partners": "Partner-Profile",
-    "app.casestudies": "Referenzprojekte",
+    "app.casestudies": "Case Studies",
     "app.wettbewerb": "Wettbewerbsanalyse",
     "app.ki_beitrag": "KI-Beiträge",
     "app.linkedin_review": "LinkedIn-Review",
     "app.vertriebscoach": "Vertriebscoach",
+    "app.onboarding": "Onboarding",
+    "app.personalakte": "Partnerakte",
     "app.activities": "Aktivitäten",
+    "app.opportunities": "Opportunity Pipeline",
     # LMS
     "lms.courses": "Kurse",
     "lms.lessons": "Lektionen",
@@ -108,6 +111,7 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "linkedin_review": ["read", "write"],
         "vertriebscoach": ["read"],
         "activities": ["read"],
+        "opportunities": ["read", "write"],
     },
     "lms": {
         "courses": ["read", "write", "delete"],
