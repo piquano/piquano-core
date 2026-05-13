@@ -130,6 +130,7 @@ def piquano_context(request):
         for p in perm_set:
             perms_dict[p.replace(".", "_")] = True
         ctx["perms_check"] = perms_dict
+        ctx["piquano_is_admin"] = perms_dict._bypass
 
         raw_toggles = _load_toggles(request.user)
         friendly = _ToggleDict()
@@ -140,6 +141,13 @@ def piquano_context(request):
     # ── ATS Badge Count (neue Bewerbungen, 24h) ────────────────────
     if hasattr(request, "user") and request.user.is_authenticated:
         ctx["ats_new_applications_count"] = _get_ats_badge_count()
+
+    # ── Impersonation ──────────────────────────────────────────────
+    ctx["is_impersonating"] = getattr(request, "is_impersonating", False)
+    ctx["real_user"] = getattr(request, "real_user", request.user)
+    ctx["impersonated_user"] = (
+        request.user if getattr(request, "is_impersonating", False) else None
+    )
 
     # ── Unified Topbar ──────────────────────────────────────────────
     app_id = getattr(settings, "PIQUANO_ADMIN_CENTER_APP", "crm")
