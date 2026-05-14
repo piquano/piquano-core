@@ -49,10 +49,14 @@ def _note_type_label(note_type):
     }.get(note_type, "Notiz")
 
 
-def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50):
+def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_cutoff=None):
     """Build a unified timeline from shared models.
 
     Returns a list of dicts ready for the unified_timeline.html template.
+
+    Args:
+        notes_cutoff: Optional datetime — if set, only notes created after
+            this date are included. E-Mails and activities are not affected.
     """
     from django.db.models import Q
 
@@ -67,7 +71,10 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50):
     entries = []
 
     # Notes
-    for n in SharedNote.objects.filter(q).order_by("-created_at")[:limit]:
+    notes_q = q
+    if notes_cutoff:
+        notes_q = notes_q & Q(created_at__gte=notes_cutoff)
+    for n in SharedNote.objects.filter(notes_q).order_by("-created_at")[:limit]:
         entries.append({
             "type": "note",
             "date": n.created_at,

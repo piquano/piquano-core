@@ -18,6 +18,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 
 from .defaults import MODULE_LABELS, PERMISSION_LABELS
 from .models import FeatureToggle, Permission, TeamPermission, UserPermission
+from .views import _get_own_app
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,9 @@ def api_stats(request):
 @_require_api_token
 def api_permissions(request):
     """Alle Permission-Objekte dieser App."""
-    perms = Permission.objects.all().values(
+    own_app = _get_own_app()
+    qs = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
+    perms = qs.values(
         "id", "app_label", "module_name", "codename", "description",
     )
     result = []
@@ -186,7 +189,8 @@ def api_user_permissions(request, username):
     User = get_user_model()
     user = User.objects.filter(username=username).first()
 
-    all_perms = Permission.objects.all()
+    own_app = _get_own_app()
+    all_perms = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
 
     # Direct user permissions (nur wenn User lokal existiert)
     user_granted_ids = set()
@@ -272,7 +276,8 @@ def api_save_user_permissions(request, username):
             .values_list("permission_id", flat=True)
         )
 
-    all_perms = Permission.objects.all()
+    own_app = _get_own_app()
+    all_perms = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
     changed = 0
 
     for perm in all_perms:
@@ -329,7 +334,8 @@ def api_save_user_permissions(request, username):
 @_require_api_token
 def api_team_permissions(request, team_id):
     """TeamPermissions eines Teams."""
-    all_perms = Permission.objects.all()
+    own_app = _get_own_app()
+    all_perms = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
     granted_ids = set(
         TeamPermission.objects.filter(team_id=team_id, is_granted=True)
         .values_list("permission_id", flat=True)
@@ -365,7 +371,8 @@ def api_save_team_permissions(request, team_id):
     except (json.JSONDecodeError, ValueError):
         return JsonResponse({"error": "Ungueltige Daten"}, status=400)
 
-    all_perms = Permission.objects.all()
+    own_app = _get_own_app()
+    all_perms = Permission.objects.filter(app_label=own_app) if own_app else Permission.objects.all()
     changed = 0
 
     for perm in all_perms:
