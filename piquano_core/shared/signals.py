@@ -19,8 +19,13 @@ def _mirror_ats_email(sender, instance, created, **kwargs):
     try:
         from piquano_core.shared.models import SharedEmail
 
-        # Dedup check
-        if instance.graph_message_id and SharedEmail.objects.filter(
+        # Dedup: internet_message_id ist postfach-uebergreifend identisch
+        if instance.internet_message_id and SharedEmail.objects.using("shared").filter(
+            internet_message_id=instance.internet_message_id,
+            ats_candidate_id=instance.candidate_id,
+        ).exists():
+            return
+        if instance.graph_message_id and SharedEmail.objects.using("shared").filter(
             graph_message_id=instance.graph_message_id
         ).exists():
             return
@@ -61,7 +66,12 @@ def _mirror_crm_email(sender, instance, created, **kwargs):
     try:
         from piquano_core.shared.models import SharedEmail
 
-        if instance.graph_message_id and SharedEmail.objects.filter(
+        if instance.internet_message_id and SharedEmail.objects.using("shared").filter(
+            internet_message_id=instance.internet_message_id,
+            crm_contact_id=instance.contact_id,
+        ).exists():
+            return
+        if instance.graph_message_id and SharedEmail.objects.using("shared").filter(
             graph_message_id=instance.graph_message_id
         ).exists():
             return
