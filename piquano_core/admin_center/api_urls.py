@@ -11,6 +11,7 @@ urlpatterns = [
     path("permissions/", api_views.api_permissions, name="api_permissions"),
     path("toggles/", api_views.api_toggles, name="api_toggles"),
     path("toggles/<uuid:pk>/", api_views.api_toggle_switch, name="api_toggle_switch"),
+    path("provision-user/", api_views.api_provision_user, name="api_provision_user"),
     path("users/", api_views.api_users, name="api_users"),
     path(
         "user-permissions/<str:username>/",

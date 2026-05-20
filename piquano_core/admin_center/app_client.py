@@ -59,6 +59,17 @@ class AdminCenterClient:
             logger.warning("AdminCenterClient %s GET %s failed: %s", self.app_label, path, e)
             raise AdminCenterClientError(f"{self.app_label}: {e}") from e
 
+    def _post(self, path: str, data: dict) -> dict:
+        try:
+            resp = self._session.post(
+                self._url(path), json=data, timeout=TIMEOUT,
+            )
+            resp.raise_for_status()
+            return resp.json()
+        except requests.RequestException as e:
+            logger.warning("AdminCenterClient %s POST %s failed: %s", self.app_label, path, e)
+            raise AdminCenterClientError(f"{self.app_label}: {e}") from e
+
     def _put(self, path: str, data: dict) -> dict:
         try:
             resp = self._session.put(
@@ -88,6 +99,14 @@ class AdminCenterClient:
     # -- Users --
     def get_users(self) -> list[dict]:
         return self._get("users/").get("users", [])
+
+    def provision_user(self, username: str, **fields) -> dict:
+        """Provision a user in this app's local database.
+
+        Accepts optional fields: first_name, last_name, email, is_staff, is_active.
+        Idempotent — safe to call multiple times for the same user.
+        """
+        return self._post("provision-user/", {"username": username, **fields})
 
     # -- User Permissions --
     def get_user_permissions(self, username: str, team_id: str = "") -> dict:

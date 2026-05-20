@@ -397,6 +397,82 @@ def api_save_team_permissions(request, team_id):
 
 
 # ---------------------------------------------------------------------------
+# User provisioning (called by Hub on account activation)
+# ---------------------------------------------------------------------------
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+@_require_api_token
+def api_provision_user(request):
+    """Provision a user in this app's local database.
+
+    Called by the Hub when a new user activates their account, so the user
+    exists in all app databases from day one (not just on first visit).
+
+    Body: {"username": "...", "first_name": "...", "last_name": "...",
+           "email": "...", "is_staff": false, "is_active": true}
+
+    Idempotent: if the user already exists, missing fields are updated.
+    """
+    import json
+
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({"error": "Ungueltige Daten"}, status=400)
+
+    username = data.get("username", "").strip()
+    if not username:
+        return JsonResponse({"error": "username ist Pflichtfeld"}, status=400)
+
+    defaults = {"is_active": data.get("is_active", True)}
+    for field in ("first_name", "last_name", "email"):
+        if data.get(field):
+            defaults[field] = data[field]
+    if "is_staff" in data:
+        defaults["is_staff"] = bool(data["is_staff"])
+
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults=defaults,
+    )
+
+    if created:
+        user.set_unusable_password()
+        user.save(update_fields=["password"])
+        # Assign default permissions
+        try:
+            from piquano_core.admin_center.permissions import assign_default_permissions
+
+            assign_default_permissions(user)
+        except Exception:
+            logger.warning("Could not assign default permissions for %s", username)
+        logger.info("Provisioned user %s via API", username)
+    else:
+        # Update fields that may have been empty from middleware auto-provision
+        update_fields = []
+        for field in ("first_name", "last_name", "email"):
+            new_val = data.get(field)
+            if new_val and not getattr(user, field):
+                setattr(user, field, new_val)
+                update_fields.append(field)
+        if update_fields:
+            user.save(update_fields=update_fields)
+            logger.info("Updated provisioned user %s: %s", username, ", ".join(update_fields))
+
+    return JsonResponse({
+        "ok": True,
+        "username": username,
+        "created": created,
+    })
+
+
+# ---------------------------------------------------------------------------
 # Users list (for permission overview — which users exist in this app)
 # ---------------------------------------------------------------------------
 
