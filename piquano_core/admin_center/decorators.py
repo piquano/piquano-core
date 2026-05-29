@@ -16,7 +16,17 @@ from functools import wraps
 from django.conf import settings
 from django.shortcuts import redirect
 from django.template import loader
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
+
+
+def _is_api_request(request):
+    """Detect API/AJAX requests that expect JSON responses."""
+    if request.content_type == "application/json":
+        return True
+    accept = request.META.get("HTTP_ACCEPT", "")
+    if "application/json" in accept and "text/html" not in accept:
+        return True
+    return request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
 
 def require_permission(codename: str):
@@ -26,11 +36,15 @@ def require_permission(codename: str):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
+                if _is_api_request(request):
+                    return JsonResponse({"error": "Nicht angemeldet."}, status=401)
                 login_url = getattr(settings, "LOGIN_URL", "/accounts/login/")
                 return redirect(f"{login_url}?next={request.path}")
             if not hasattr(request.user, "has_piquano_perm"):
                 return view_func(request, *args, **kwargs)  # Middleware fehlt → fail-open
             if not request.user.has_piquano_perm(codename):
+                if _is_api_request(request):
+                    return JsonResponse({"error": "Keine Berechtigung."}, status=403)
                 try:
                     template = loader.get_template("403.html")
                     return HttpResponseForbidden(template.render(request=request))
@@ -50,11 +64,15 @@ def require_feature(app_label: str, module_name: str):
         @wraps(view_func)
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
+                if _is_api_request(request):
+                    return JsonResponse({"error": "Nicht angemeldet."}, status=401)
                 login_url = getattr(settings, "LOGIN_URL", "/accounts/login/")
                 return redirect(f"{login_url}?next={request.path}")
             if not hasattr(request.user, "is_feature_enabled"):
                 return view_func(request, *args, **kwargs)  # Middleware fehlt → fail-open
             if not request.user.is_feature_enabled(app_label, module_name):
+                if _is_api_request(request):
+                    return JsonResponse({"error": "Feature nicht verfuegbar."}, status=403)
                 try:
                     template = loader.get_template("403.html")
                     return HttpResponseForbidden(template.render(request=request))
