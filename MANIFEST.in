@@ -1,1 +1,1 @@
-recursive-include piquano_core *.html *.css
+recursive-include piquano_core *.html *.css *.js
