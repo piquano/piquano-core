@@ -14,9 +14,9 @@ from __future__ import annotations
 from functools import wraps
 
 from django.conf import settings
+from django.contrib import messages
 from django.shortcuts import redirect
-from django.template import loader
-from django.http import HttpResponseForbidden, JsonResponse
+from django.http import JsonResponse
 
 
 def _is_api_request(request):
@@ -45,11 +45,9 @@ def require_permission(codename: str):
             if not request.user.has_piquano_perm(codename):
                 if _is_api_request(request):
                     return JsonResponse({"error": "Keine Berechtigung."}, status=403)
-                try:
-                    template = loader.get_template("403.html")
-                    return HttpResponseForbidden(template.render(request=request))
-                except Exception:
-                    return HttpResponseForbidden("Keine Berechtigung")
+                messages.error(request, "Du hast keinen Zugriff auf diese Funktion.")
+                referer = request.META.get("HTTP_REFERER", "/")
+                return redirect(referer)
             return view_func(request, *args, **kwargs)
 
         return wrapper
@@ -73,11 +71,9 @@ def require_feature(app_label: str, module_name: str):
             if not request.user.is_feature_enabled(app_label, module_name):
                 if _is_api_request(request):
                     return JsonResponse({"error": "Feature nicht verfuegbar."}, status=403)
-                try:
-                    template = loader.get_template("403.html")
-                    return HttpResponseForbidden(template.render(request=request))
-                except Exception:
-                    return HttpResponseForbidden("Feature nicht verfuegbar")
+                messages.error(request, "Diese Funktion ist nicht freigeschaltet.")
+                referer = request.META.get("HTTP_REFERER", "/")
+                return redirect(referer)
             return view_func(request, *args, **kwargs)
 
         return wrapper
