@@ -53,6 +53,7 @@ MODULE_LABELS = {
     "app.activities": "Aktivitäten",
     "app.opportunities": "Opportunity Pipeline",
     "app.experten_beitrag": "Expertenbeitrag",
+    "app.events": "Eventkalender",
     # LMS
     "lms.courses": "Kurse",
     "lms.lessons": "Lektionen",
@@ -116,6 +117,7 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "activities": ["read"],
         "opportunities": ["read", "write"],
         "experten_beitrag": ["read", "write"],
+        "events": ["read", "write"],
     },
     "lms": {
         "courses": ["read", "write", "delete"],
