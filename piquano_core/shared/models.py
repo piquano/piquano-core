@@ -217,3 +217,96 @@ class SharedActivity(models.Model):
 
     def __str__(self):
         return f"{self.get_activity_type_display()}: {self.subject or self.description[:60]}"
+
+
+# ---------------------------------------------------------------------------
+# Funktionskatalog (Verticals + Sub-Funktionen)
+# ---------------------------------------------------------------------------
+
+class EntityType(models.TextChoices):
+    ATS_CANDIDATE = "ats_candidate", "ATS-Kandidat"
+    CRM_CONTACT = "crm_contact", "CRM-Kontakt"
+
+
+class Vertical(models.Model):
+    """Oberkategorie im Funktionskatalog (z.B. 'Human Resources')."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField("Name", max_length=120, unique=True)
+    slug = models.SlugField("Slug", max_length=120, unique=True)
+    sort_order = models.PositiveSmallIntegerField("Reihenfolge", default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "catalog_vertical"
+        ordering = ["sort_order", "name"]
+        verbose_name = "Vertical"
+        verbose_name_plural = "Verticals"
+
+    def __str__(self):
+        return self.name
+
+
+class SubFunktion(models.Model):
+    """Unterkategorie innerhalb eines Verticals (z.B. 'Payroll')."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    vertical = models.ForeignKey(
+        Vertical,
+        on_delete=models.CASCADE,
+        related_name="sub_funktionen",
+        verbose_name="Vertical",
+    )
+    name = models.CharField("Name", max_length=200)
+    slug = models.SlugField("Slug", max_length=200)
+    sort_order = models.PositiveSmallIntegerField("Reihenfolge", default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "catalog_subfunktion"
+        ordering = ["vertical", "sort_order", "name"]
+        unique_together = [("vertical", "slug")]
+        verbose_name = "Sub-Funktion"
+        verbose_name_plural = "Sub-Funktionen"
+
+    def __str__(self):
+        return f"{self.vertical.name} → {self.name}"
+
+
+class CatalogAssignment(models.Model):
+    """Zuordnung einer Person (ATS-Kandidat oder CRM-Kontakt) zu Sub-Funktionen.
+
+    Lebt in piquano_shared, referenziert Personen per UUID (kein FK cross-DB).
+    Eine Zeile pro Person × Sub-Funktion. Das Vertical ergibt sich aus der Sub-Funktion.
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    entity_type = models.CharField(
+        max_length=20, choices=EntityType.choices,
+        help_text="Typ der zugeordneten Person",
+    )
+    entity_id = models.UUIDField(
+        help_text="UUID des Kandidaten (ATS) oder Kontakts (CRM)",
+        db_index=True,
+    )
+    sub_funktion = models.ForeignKey(
+        SubFunktion,
+        on_delete=models.CASCADE,
+        related_name="assignments",
+        verbose_name="Sub-Funktion",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "catalog_assignment"
+        unique_together = [("entity_type", "entity_id", "sub_funktion")]
+        indexes = [
+            models.Index(fields=["entity_type", "entity_id"]),
+        ]
+        verbose_name = "Katalog-Zuordnung"
+        verbose_name_plural = "Katalog-Zuordnungen"
+
+    def __str__(self):
+        return f"{self.get_entity_type_display()} {self.entity_id} → {self.sub_funktion}"

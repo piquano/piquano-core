@@ -237,10 +237,10 @@
     {# ====== RIGHT ====== #}
     <div style="display:flex; flex-direction:column; gap:20px;">
 
-        {# --- 1. Schwerpunkte & Kompetenzen --- #}
-        {% if k.schwerpunkte or k.kompetenzen or k.tagessatz or k.verfuegbar_ab or k.branchen or k.verticals %}
+        {# --- 1. Schwerpunkte & Katalog-Zuordnungen --- #}
+        {% if catalog_assignments or k.schwerpunkte or k.tagessatz or k.verfuegbar_ab or k.branchen or k.verticals %}
         <div class="card">
-            <div class="card-header"><h2>Schwerpunkte &amp; Kompetenzen</h2></div>
+            <div class="card-header"><h2>Schwerpunkte &amp; Zuordnungen</h2></div>
             <div class="card-body" style="display:flex; flex-direction:column; gap:14px;">
                 {% if k.tagessatz or k.verfuegbar_ab %}
                 <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
@@ -249,9 +249,20 @@
                 </div>
                 {% endif %}
                 {% if k.branchen %}<div><h3 class="detail-section-title">Branchen-Erfahrung</h3><div class="tag-list">{% for b in k.branchen_labels %}<span class="tag">{{ b }}</span>{% endfor %}</div></div>{% endif %}
+                {% if catalog_assignments %}
+                {# Neue Katalog-Zuordnungen: gruppiert nach Vertical #}
+                {% regroup catalog_assignments by vertical as vertical_groups %}
+                {% for group in vertical_groups %}
+                <div>
+                    <h3 class="detail-section-title">{{ group.grouper }}</h3>
+                    <div class="tag-list">{% for item in group.list %}<span class="tag tag-vertical">{{ item.sub_funktion }}</span>{% endfor %}</div>
+                </div>
+                {% endfor %}
+                {% else %}
+                {# Fallback: alte Felder wenn keine Katalog-Zuordnungen vorhanden #}
                 {% if k.verticals %}<div><h3 class="detail-section-title">Piquano-Verticals</h3><div class="tag-list">{% for v in k.vertical_labels %}<span class="tag tag-vertical">{{ v }}</span>{% endfor %}</div></div>{% endif %}
                 {% if k.schwerpunkte %}<div><h3 class="detail-section-title">Schwerpunkte</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.schwerpunkte|safe }}</div></div>{% endif %}
-                {% if k.kompetenzen %}<div><h3 class="detail-section-title">Kompetenzen</h3><div class="rich-text" style="font-size:14px; line-height:1.6; color:var(--piquano-text);">{{ k.kompetenzen|safe }}</div></div>{% endif %}
+                {% endif %}
             </div>
         </div>
         {% endif %}

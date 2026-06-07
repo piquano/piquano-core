@@ -501,3 +501,88 @@ def api_users(request):
         })
 
     return JsonResponse({"users": result})
+
+
+# ---------------------------------------------------------------------------
+# Funktionskatalog-API
+# ---------------------------------------------------------------------------
+
+@csrf_exempt
+@require_GET
+@_require_api_token
+def api_catalog(request):
+    """Gibt den vollständigen Funktionskatalog als JSON zurück.
+
+    Response:
+    {
+        "verticals": [
+            {
+                "id": "...", "name": "...", "slug": "...",
+                "sub_funktionen": [
+                    {"id": "...", "name": "...", "slug": "..."},
+                    ...
+                ]
+            },
+            ...
+        ]
+    }
+    """
+    from piquano_core.shared.models import Vertical
+
+    verticals = (
+        Vertical.objects.using("shared")
+        .prefetch_related("sub_funktionen")
+        .order_by("sort_order", "name")
+    )
+
+    result = []
+    for v in verticals:
+        result.append({
+            "id": str(v.id),
+            "name": v.name,
+            "slug": v.slug,
+            "sub_funktionen": [
+                {"id": str(sf.id), "name": sf.name, "slug": sf.slug}
+                for sf in v.sub_funktionen.order_by("sort_order", "name")
+            ],
+        })
+
+    return JsonResponse({"verticals": result})
+
+
+@csrf_exempt
+@require_GET
+@_require_api_token
+def api_entity_catalog(request, entity_type, entity_id):
+    """Gibt die Katalog-Zuordnungen einer Person zurück.
+
+    GET /api/catalog/ats_candidate/<uuid>/
+    GET /api/catalog/crm_contact/<uuid>/
+
+    Response:
+    {
+        "assignments": [
+            {"vertical": "...", "sub_funktion": "...", "sub_funktion_id": "..."},
+            ...
+        ]
+    }
+    """
+    from piquano_core.shared.models import CatalogAssignment
+
+    assignments = (
+        CatalogAssignment.objects.using("shared")
+        .filter(entity_type=entity_type, entity_id=entity_id)
+        .select_related("sub_funktion__vertical")
+    )
+
+    result = []
+    for a in assignments:
+        result.append({
+            "vertical": a.sub_funktion.vertical.name,
+            "vertical_slug": a.sub_funktion.vertical.slug,
+            "sub_funktion": a.sub_funktion.name,
+            "sub_funktion_slug": a.sub_funktion.slug,
+            "sub_funktion_id": str(a.sub_funktion.id),
+        })
+
+    return JsonResponse({"assignments": result})

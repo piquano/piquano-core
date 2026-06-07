@@ -566,3 +566,139 @@ def _system_metrics_api(request):
 def docs_page(request, page):
     """Statische Dokumentationsseiten (Admin-Handbuch, TOM, VVT)."""
     return render(request, f"piquano_admin_center/docs/{page}.html")
+
+
+# ---------------------------------------------------------------------------
+# Funktionskatalog
+# ---------------------------------------------------------------------------
+
+@_staff_required
+def catalog_list(request):
+    """Uebersicht: alle Verticals mit Sub-Funktionen."""
+    from piquano_core.shared.models import CatalogAssignment, SubFunktion, Vertical
+
+    verticals = (
+        Vertical.objects.using("shared")
+        .prefetch_related("sub_funktionen")
+        .order_by("sort_order", "name")
+    )
+    from django.db.models import Count
+
+    assignment_counts = {}
+    for row in (
+        CatalogAssignment.objects.using("shared")
+        .values("sub_funktion__vertical__id")
+        .annotate(count=Count("id"))
+    ):
+        assignment_counts[row["sub_funktion__vertical__id"]] = row["count"]
+
+    vertical_data = []
+    for v in verticals:
+        vertical_data.append({
+            "vertical": v,
+            "sub_funktionen": v.sub_funktionen.order_by("sort_order", "name"),
+            "assignment_count": assignment_counts.get(v.id, 0),
+        })
+
+    return render(
+        request,
+        "piquano_admin_center/catalog_list.html",
+        {"vertical_data": vertical_data},
+    )
+
+
+@_staff_required
+@require_POST
+def catalog_add_vertical(request):
+    """Neues Vertical anlegen."""
+    from django.utils.text import slugify
+
+    from piquano_core.shared.models import Vertical
+
+    name = request.POST.get("name", "").strip()
+    if not name:
+        messages.error(request, "Name ist erforderlich.")
+        return redirect("piquano_admin_center:catalog")
+
+    slug = slugify(name)
+    if Vertical.objects.using("shared").filter(slug=slug).exists():
+        messages.error(request, f"Vertical '{name}' existiert bereits.")
+        return redirect("piquano_admin_center:catalog")
+
+    max_order = Vertical.objects.using("shared").order_by("-sort_order").values_list("sort_order", flat=True).first() or 0
+    Vertical.objects.using("shared").create(name=name, slug=slug, sort_order=max_order + 1)
+    messages.success(request, f"Vertical '{name}' angelegt.")
+    return redirect("piquano_admin_center:catalog")
+
+
+@_staff_required
+@require_POST
+def catalog_add_subfunktion(request):
+    """Neue Sub-Funktion anlegen."""
+    from django.utils.text import slugify
+
+    from piquano_core.shared.models import SubFunktion, Vertical
+
+    vertical_id = request.POST.get("vertical_id")
+    name = request.POST.get("name", "").strip()
+    if not name or not vertical_id:
+        messages.error(request, "Vertical und Name sind erforderlich.")
+        return redirect("piquano_admin_center:catalog")
+
+    vertical = Vertical.objects.using("shared").filter(id=vertical_id).first()
+    if not vertical:
+        messages.error(request, "Vertical nicht gefunden.")
+        return redirect("piquano_admin_center:catalog")
+
+    slug = slugify(name)
+    if SubFunktion.objects.using("shared").filter(vertical=vertical, slug=slug).exists():
+        messages.error(request, f"Sub-Funktion '{name}' existiert bereits in {vertical.name}.")
+        return redirect("piquano_admin_center:catalog")
+
+    max_order = (
+        SubFunktion.objects.using("shared")
+        .filter(vertical=vertical)
+        .order_by("-sort_order")
+        .values_list("sort_order", flat=True)
+        .first()
+        or 0
+    )
+    SubFunktion.objects.using("shared").create(
+        vertical=vertical, name=name, slug=slug, sort_order=max_order + 1
+    )
+    messages.success(request, f"Sub-Funktion '{name}' unter {vertical.name} angelegt.")
+    return redirect("piquano_admin_center:catalog")
+
+
+@_staff_required
+@require_POST
+def catalog_delete_vertical(request, pk):
+    """Vertical loeschen -- entfernt alle Sub-Funktionen und Zuordnungen."""
+    from piquano_core.shared.models import Vertical
+
+    vertical = Vertical.objects.using("shared").filter(id=pk).first()
+    if not vertical:
+        messages.error(request, "Vertical nicht gefunden.")
+        return redirect("piquano_admin_center:catalog")
+
+    name = vertical.name
+    vertical.delete(using="shared")
+    messages.success(request, f"Vertical '{name}' und alle Zuordnungen geloescht.")
+    return redirect("piquano_admin_center:catalog")
+
+
+@_staff_required
+@require_POST
+def catalog_delete_subfunktion(request, pk):
+    """Sub-Funktion loeschen -- entfernt alle Zuordnungen."""
+    from piquano_core.shared.models import SubFunktion
+
+    sf = SubFunktion.objects.using("shared").filter(id=pk).first()
+    if not sf:
+        messages.error(request, "Sub-Funktion nicht gefunden.")
+        return redirect("piquano_admin_center:catalog")
+
+    name = sf.name
+    sf.delete(using="shared")
+    messages.success(request, f"Sub-Funktion '{name}' und alle Zuordnungen geloescht.")
+    return redirect("piquano_admin_center:catalog")

@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Funktionskatalog — Admin-Center{% endblock %}
+
+{% block content %}
+<style>
+.cat-vertical { margin-bottom:20px; }
+.cat-vertical__header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; }
+.cat-vertical__name { font-weight:700; font-size:15px; color:#133447; }
+.cat-vertical__count { font-size:12px; color:#64748b; margin-left:8px; }
+.cat-sf-list { padding:0; margin:0; list-style:none; }
+.cat-sf-item { display:flex; align-items:center; justify-content:space-between; padding:8px 20px 8px 36px; border-bottom:1px solid #f1f5f9; font-size:13px; }
+.cat-sf-item:last-child { border-bottom:none; }
+.cat-sf-item:hover { background:#f8fafc; }
+.cat-btn-add { font-size:12px; padding:4px 10px; background:transparent; border:1px dashed #94a3b8; color:#64748b; border-radius:6px; cursor:pointer; }
+.cat-btn-add:hover { border-color:#328cc1; color:#328cc1; }
+.cat-btn-del { font-size:11px; padding:2px 8px; background:transparent; border:1px solid #fca5a5; color:#dc2626; border-radius:4px; cursor:pointer; opacity:0.5; }
+.cat-btn-del:hover { opacity:1; background:#fef2f2; }
+.cat-add-form { display:flex; gap:8px; align-items:center; padding:8px 20px 8px 36px; }
+.cat-add-form input { font-size:13px; padding:4px 10px; border:1px solid #e2e8f0; border-radius:6px; flex:1; }
+</style>
+
+<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Funktionskatalog</h1>
+</div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="catalog" %}
+
+{% for item in vertical_data %}
+<div class="card cat-vertical">
+    <div class="cat-vertical__header">
+        <div>
+            <span class="cat-vertical__name">{{ item.vertical.name }}</span>
+            <span class="cat-vertical__count">{{ item.sub_funktionen|length }} Sub-Funktionen · {{ item.assignment_count }} Zuordnungen</span>
+        </div>
+        <form method="post" action="{% url 'piquano_admin_center:catalog_delete_vertical' item.vertical.id %}"
+              onsubmit="return confirm('Vertical „{{ item.vertical.name }}" und alle {{ item.assignment_count }} Zuordnungen löschen?');">
+            {% csrf_token %}
+            <button type="submit" class="cat-btn-del" title="Vertical löschen">Löschen</button>
+        </form>
+    </div>
+    <ul class="cat-sf-list">
+        {% for sf in item.sub_funktionen %}
+        <li class="cat-sf-item">
+            <span>{{ sf.name }}</span>
+            <form method="post" action="{% url 'piquano_admin_center:catalog_delete_subfunktion' sf.id %}" style="margin:0;"
+                  onsubmit="return confirm('Sub-Funktion „{{ sf.name }}" löschen?');">
+                {% csrf_token %}
+                <button type="submit" class="cat-btn-del">×</button>
+            </form>
+        </li>
+        {% endfor %}
+        <li class="cat-add-form">
+            <form method="post" action="{% url 'piquano_admin_center:catalog_add_subfunktion' %}" style="display:flex; gap:8px; width:100%; margin:0;">
+                {% csrf_token %}
+                <input type="hidden" name="vertical_id" value="{{ item.vertical.id }}">
+                <input type="text" name="name" placeholder="Neue Sub-Funktion..." required>
+                <button type="submit" class="cat-btn-add">+ Hinzufügen</button>
+            </form>
+        </li>
+    </ul>
+</div>
+{% endfor %}
+
+<div class="card" style="padding:16px 20px;">
+    <form method="post" action="{% url 'piquano_admin_center:catalog_add_vertical' %}" style="display:flex; gap:8px; align-items:center;">
+        {% csrf_token %}
+        <input type="text" name="name" placeholder="Neues Vertical..." required style="font-size:14px; padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; flex:1;">
+        <button type="submit" class="btn btn-primary" style="font-size:13px; padding:8px 16px;">+ Vertical anlegen</button>
+    </form>
+</div>
+
+{% endblock %}

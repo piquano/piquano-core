@@ -33,4 +33,11 @@ urlpatterns = [
         api_views.api_save_team_permissions,
         name="api_save_team_permissions",
     ),
+    # Funktionskatalog
+    path("catalog/", api_views.api_catalog, name="api_catalog"),
+    path(
+        "catalog/<str:entity_type>/<uuid:entity_id>/",
+        api_views.api_entity_catalog,
+        name="api_entity_catalog",
+    ),
 ]
