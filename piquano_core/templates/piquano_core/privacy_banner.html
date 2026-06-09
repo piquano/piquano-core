@@ -1,9 +1,23 @@
 {% if show_privacy_banner %}
-<div id="privacy-banner" style="position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#133447; color:#fff; padding:14px 24px; display:flex; align-items:center; justify-content:center; gap:16px; font-size:14px; box-shadow:0 -2px 8px rgba(0,0,0,0.15);">
-    <span>Unsere <a href="https://crm.piquano.com/datenschutz/" target="_blank" rel="noopener" style="color:#7dc8f5; text-decoration:underline;">Datenschutzerkl&auml;rung</a> wurde aktualisiert (Version {{ current_dse_version }}). Bitte nimm sie zur Kenntnis.</span>
-    <form method="post" action="{% url 'pq_privacy:acknowledge' %}" style="margin:0;">
-        {% csrf_token %}
-        <button type="submit" style="background:#328cc1; color:#fff; border:none; border-radius:4px; padding:8px 20px; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap;">Zur Kenntnis genommen</button>
-    </form>
+<div id="privacy-blocker" style="position:fixed; inset:0; z-index:99999; background:rgba(19,52,71,0.95); display:flex; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:8px; max-width:540px; width:90%; padding:32px 36px; text-align:center; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+        <div style="width:48px; height:48px; margin:0 auto 20px; background:#e8f0fe; border-radius:50%; display:flex; align-items:center; justify-content:center;">
+            <svg style="width:24px; height:24px; color:#328cc1;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h2 style="margin:0 0 12px; font-size:1.25rem; color:#133447;">Aktualisierte Datenschutzerkl&auml;rung</h2>
+        <p style="margin:0 0 20px; font-size:14px; color:#475569; line-height:1.6;">
+            Unsere Datenschutzerkl&auml;rung wurde auf Version {{ current_dse_version }} aktualisiert.
+            Bitte lies die &Auml;nderungen und best&auml;tige die Kenntnisnahme, um fortzufahren.
+        </p>
+        <a href="https://crm.piquano.com/datenschutz/" target="_blank" rel="noopener" style="display:inline-block; margin-bottom:20px; color:#328cc1; font-size:14px; font-weight:600; text-decoration:none;">
+            Datenschutzerkl&auml;rung lesen &rarr;
+        </a>
+        <form method="post" action="{% url 'pq_privacy:acknowledge' %}" style="margin:0;">
+            {% csrf_token %}
+            <button type="submit" style="width:100%; padding:12px; background:#328cc1; color:#fff; border:none; border-radius:4px; font-size:15px; font-weight:600; cursor:pointer;">
+                Zur Kenntnis genommen
+            </button>
+        </form>
+    </div>
 </div>
 {% endif %}
