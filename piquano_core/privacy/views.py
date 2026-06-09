@@ -39,6 +39,8 @@ def privacy_acknowledge(request):
             f"api/v1/users/{request.user.username}/privacy-acknowledge/",
             json={"ip_hash": ip_hash, "version": CURRENT_DSE_VERSION},
         )
+        # Cache invalidieren damit der nächste Request die neue Version sieht
+        client.invalidate_cache(f"user:{request.user.username}")
         logger.info(
             "DSGVO Art.13 Kenntnisnahme: User=%s, IP-Hash=%s",
             request.user.username,
