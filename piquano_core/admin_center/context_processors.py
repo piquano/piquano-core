@@ -154,7 +154,7 @@ def piquano_context(request):
 
     # ── Privacy Banner ─────────────────────────────────────────────
     if hasattr(request, "user") and request.user.is_authenticated:
-        user_dse = getattr(request.user, "_privacy_version", "") or ""
+        user_dse = getattr(request.user, "_privacy_version", None) or getattr(request.user, "privacy_version", None) or ""
         ctx["show_privacy_banner"] = user_dse != CURRENT_DSE_VERSION
         ctx["current_dse_version"] = CURRENT_DSE_VERSION
     else:
