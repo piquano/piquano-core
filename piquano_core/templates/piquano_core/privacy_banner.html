@@ -1,0 +1,9 @@
+{% if show_privacy_banner %}
+<div id="privacy-banner" style="position:fixed; bottom:0; left:0; right:0; z-index:9999; background:#133447; color:#fff; padding:14px 24px; display:flex; align-items:center; justify-content:center; gap:16px; font-size:14px; box-shadow:0 -2px 8px rgba(0,0,0,0.15);">
+    <span>Unsere <a href="https://crm.piquano.com/datenschutz/" target="_blank" rel="noopener" style="color:#7dc8f5; text-decoration:underline;">Datenschutzerkl&auml;rung</a> wurde aktualisiert (Version {{ current_dse_version }}). Bitte nimm sie zur Kenntnis.</span>
+    <form method="post" action="{% url 'pq_privacy:acknowledge' %}" style="margin:0;">
+        {% csrf_token %}
+        <button type="submit" style="background:#328cc1; color:#fff; border:none; border-radius:4px; padding:8px 20px; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap;">Zur Kenntnis genommen</button>
+    </form>
+</div>
+{% endif %}

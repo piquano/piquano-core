@@ -160,3 +160,7 @@ class AutheliaCRMRemoteUserMiddleware(AutheliaRemoteUserMiddleware):
         team_data = data.get("team")
         if isinstance(team_data, dict) and team_data.get("id"):
             user.team_id = team_data["id"]
+
+        # ----- privacy consent (in-memory, for banner display) --------
+        user._privacy_version = data.get("privacy_version") or ""
+        user._privacy_accepted_at = data.get("privacy_accepted_at") or ""

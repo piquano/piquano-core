@@ -96,6 +96,9 @@ class _PermDict(dict):
         return self.get(key, False)
 
 
+CURRENT_DSE_VERSION = "3.1"
+
+
 def piquano_context(request):
     """Add Piquano permissions and feature toggles to template context.
 
@@ -148,6 +151,14 @@ def piquano_context(request):
     ctx["impersonated_user"] = (
         request.user if getattr(request, "is_impersonating", False) else None
     )
+
+    # ── Privacy Banner ─────────────────────────────────────────────
+    if hasattr(request, "user") and request.user.is_authenticated:
+        user_dse = getattr(request.user, "_privacy_version", "") or ""
+        ctx["show_privacy_banner"] = user_dse != CURRENT_DSE_VERSION
+        ctx["current_dse_version"] = CURRENT_DSE_VERSION
+    else:
+        ctx["show_privacy_banner"] = False
 
     # ── Unified Topbar ──────────────────────────────────────────────
     app_id = getattr(settings, "PIQUANO_ADMIN_CENTER_APP", "crm")
