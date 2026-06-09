@@ -166,6 +166,8 @@ class ActivityType(models.TextChoices):
     STAGE_MOVED = "stage_moved", "Stage verschoben"
     STATUS_CHANGED = "status_changed", "Status geändert"
     AI_SCORED = "ai_scored", "KI-Scoring"
+    # Karriereseite / Alerts
+    ALERT_SUBSCRIBED = "alert_subscribed", "Projekt-Alert abonniert"
     # CRM-spezifisch
     DEAL_CREATED = "deal_created", "Deal angelegt"
     DEAL_WON = "deal_won", "Deal gewonnen"

@@ -226,6 +226,8 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           {% elif entry.type == "activity" %}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          {% elif entry.type == "alert" %}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
           {% elif entry.type == "audit" %}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           {% endif %}
@@ -236,7 +238,7 @@
           <div class="utl-entry__header">
             <div class="utl-entry__meta">
               <span class="utl-entry__type-label utl-type--{{ entry.type }}">
-                {% if entry.type == "note" %}Notiz{% elif entry.type == "email" %}E-Mail{% elif entry.type == "call" %}Anruf{% elif entry.type == "meeting" %}Meeting{% elif entry.type == "activity" %}Aktivitaet{% elif entry.type == "audit" %}Audit{% endif %}
+                {% if entry.type == "note" %}Notiz{% elif entry.type == "email" %}E-Mail{% elif entry.type == "call" %}Anruf{% elif entry.type == "meeting" %}Meeting{% elif entry.type == "alert" %}Projekt-Alert{% elif entry.type == "activity" %}Aktivitaet{% elif entry.type == "audit" %}Audit{% endif %}
                 {% if entry.extra.note_type %}
                   <span class="utl-entry__subtype">{{ entry.extra.note_type }}</span>
                 {% endif %}
@@ -364,6 +366,7 @@
   --utl-call: #16a34a;
   --utl-meeting: #f59e0b;
   --utl-activity: #6b7280;
+  --utl-alert: #e65100;
   --utl-audit: #9ca3af;
   --utl-radius: 8px;
   --utl-radius-lg: 12px;
@@ -778,6 +781,10 @@
   background: rgba(107, 114, 128, 0.12);
   color: var(--utl-activity);
 }
+.utl-icon--alert {
+  background: rgba(230, 81, 0, 0.12);
+  color: var(--utl-alert);
+}
 .utl-icon--audit {
   background: rgba(156, 163, 175, 0.1);
   color: var(--utl-audit);
@@ -826,6 +833,7 @@
 .utl-type--call { background: rgba(22, 163, 74, 0.1); color: var(--utl-call); }
 .utl-type--meeting { background: rgba(245, 158, 11, 0.1); color: var(--utl-meeting); }
 .utl-type--activity { background: rgba(107, 114, 128, 0.1); color: var(--utl-activity); }
+.utl-type--alert { background: rgba(230, 81, 0, 0.1); color: var(--utl-alert); }
 .utl-type--audit { background: rgba(156, 163, 175, 0.08); color: var(--utl-audit); }
 
 .utl-entry__subtype {
@@ -1308,7 +1316,7 @@
     counts.all++;
     if (t === 'note') counts.note++;
     else if (t === 'email') counts.email++;
-    else counts.activity++; /* call, meeting, activity, audit all under "activities" */
+    else counts.activity++; /* call, meeting, activity, alert, audit all under "activities" */
   });
 
   var countAll = document.getElementById('utlCountAll');
@@ -1343,7 +1351,7 @@
       } else if (filter === 'email') {
         show = (type === 'email');
       } else if (filter === 'activity') {
-        show = (type === 'call' || type === 'meeting' || type === 'activity' || type === 'audit');
+        show = (type === 'call' || type === 'meeting' || type === 'activity' || type === 'alert' || type === 'audit');
       }
 
       if (show) {

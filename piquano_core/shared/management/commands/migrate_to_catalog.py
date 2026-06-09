@@ -217,11 +217,33 @@ FUNKTIONEN_MAP = {
     "Environment, Health and Safety (EHS)": ("qualitatsmanagement", "qm-leitung"),
     # Qualitätsmanagement
     "Qualitätsmanagement (QM)": ("qualitatsmanagement", "qm-leitung"),
+    # --- Zusätzliche Mappings (aus Prod Dry-Run) ---
+    "Agile Methoden": ("programm-und-projektmanagement", "agiles-projektmanagement-scrum"),
+    "Cloud Infrastructure & Collaboration": ("it-management", "cloud-infrastructure-collaboration"),
+    "Compensation&Benefits": ("human-resources", "compensation-benefits"),
+    "Executive": ("general-management", "geschaftsfuhrung-ceo"),
+    "Finance": ("finanzen-controlling", "leitung-finance-cfo"),
+    "Finanzen Steuern International": ("finanzen-controlling", "steuern-international"),
+    "Lager & Distribution": ("logistik-warehousing", "lager-warehousing"),
+    "Marketing & Vertrieb": ("marketing-vertrieb", "vertriebsleitung-cso"),
+    "Multiprojektmanagement": ("programm-und-projektmanagement", "multiprojektmanagement"),
+    "Produktion & Operations": ("produktion-operations", "produktionsleitung-coo"),
+    "Programm-Management": ("programm-und-projektmanagement", "programmmanagement"),
+    "Projektsteuerung": ("programm-und-projektmanagement", "projektplanung-steuerung"),
+    "Rechnungswesen": ("finanzen-controlling", "accounting-rechnungswesen"),
+    "Retention Talent Management": ("human-resources", "talent-management"),
+    "Sourcing": ("einkauf-supply-chain", "sourcing-ausschreibungsmanagement"),
+    "Transport": ("logistik-warehousing", "transport-distribution"),
+    "Treasury": ("finanzen-controlling", "treasury"),
+    "Turnaround-Projekte": ("programm-und-projektmanagement", "projektsanierung-turnaround-projekte"),
+    "Vertriebsaufbau": ("marketing-vertrieb", "vertriebsaufbau-strukturierung"),
+    "Wachstum Transformation": ("transformation-change", "optimierung-wachstum"),
     # Sonstige — ignorieren
     "Interim Manager": None,
     "Administration": None,
     "Andere": None,
     "Pool": None,
+    "allgemeiner Managerpool": None,
 }
 
 

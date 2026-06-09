@@ -109,8 +109,10 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
 
     # Activities
     for a in SharedActivity.objects.filter(q).order_by("-created_at")[:limit]:
+        # Alert-Subscriptions als eigenen Typ "alert" durchreichen
+        entry_type = "alert" if a.activity_type == "alert_subscribed" else "activity"
         entries.append({
-            "type": "activity",
+            "type": entry_type,
             "date": a.created_at,
             "date_group": _date_group(a.created_at),
             "text": a.description,
