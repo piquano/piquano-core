@@ -106,9 +106,9 @@
             <div class="utl-field utl-field--half">
               <label class="utl-field__label" for="utlActivityType">Typ</label>
               <select name="activity_type" id="utlActivityType" class="utl-input utl-input--select" required>
-                <option value="call">Anruf</option>
-                <option value="meeting">Meeting</option>
-                <option value="task">Aufgabe</option>
+                {% for t in quick_activity_types %}
+                <option value="{{ t.pk }}">{{ t.name }}</option>
+                {% endfor %}
               </select>
             </div>
             <div class="utl-field utl-field--half">
