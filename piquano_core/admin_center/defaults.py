@@ -33,6 +33,7 @@ MODULE_LABELS = {
     "crm.projektabrechnung": "Projektabrechnung",
     "crm.partner_pipeline": "Partner-Pipeline",
     "crm.opportunities": "Opportunity Pipeline",
+    "crm.companies": "Firmen",
     # ATS
     "ats.candidates": "Kandidaten",
     "ats.jobs": "Projekte & Ausschreibungen",
@@ -79,6 +80,7 @@ PERMISSION_LABELS = {
     "read": "Lesen",
     "write": "Bearbeiten",
     "delete": "Löschen",
+    "merge": "Zusammenführen",
 }
 
 PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
@@ -97,6 +99,7 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "projektabrechnung": ["read", "write"],
         "partner_pipeline": ["read"],
         "opportunities": ["read", "write"],
+        "companies": ["read", "write", "merge"],
     },
     "ats": {
         "candidates": ["read", "write", "delete"],
