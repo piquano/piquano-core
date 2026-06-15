@@ -28,7 +28,27 @@ def _load_perms(user):
         perms = set()
 
         # 1. Team-level permissions as base
+        # Try local team FK first, then CRM API fallback (for apps
+        # where User model has no team field, e.g. ATS).
         team_id = getattr(user, "team_id", None)
+        if not team_id:
+            try:
+                from django.core.cache import cache
+
+                cache_key = f"piquano_team_id:{user.pk}"
+                team_id = cache.get(cache_key)
+                if team_id is None:
+                    from piquano_core.crm_client import CRMClient
+
+                    data = CRMClient.from_settings().get_user(user.username)
+                    team_data = data.get("team")
+                    if isinstance(team_data, dict) and team_data.get("id"):
+                        team_id = team_data["id"]
+                    cache.set(cache_key, team_id or "", 300)  # 5 min
+                if not team_id:
+                    team_id = None
+            except Exception:
+                pass
         if team_id:
             team_qs = (
                 TeamPermission.objects.filter(team_id=team_id, is_granted=True)
