@@ -232,5 +232,9 @@ class ImpersonationMiddleware:
                     val = data.get(field)
                     if val:
                         setattr(user, field, val)
+
+            # Privacy-Version (in-memory, fuer Banner-Check)
+            user._privacy_version = data.get("privacy_version") or ""
+            user._privacy_accepted_at = data.get("privacy_accepted_at") or ""
         except Exception:
             logger.debug("Impersonation: CRM-Enrich fuer %s fehlgeschlagen", username)

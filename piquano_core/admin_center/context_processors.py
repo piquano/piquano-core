@@ -153,9 +153,13 @@ def piquano_context(request):
     )
 
     # ── Privacy Banner ─────────────────────────────────────────────
+    # Bei Impersonation nicht anzeigen — Admin kann DSE nicht fuer andere bestätigen
     if hasattr(request, "user") and request.user.is_authenticated:
-        user_dse = getattr(request.user, "_privacy_version", None) or getattr(request.user, "privacy_version", None) or ""
-        ctx["show_privacy_banner"] = user_dse != CURRENT_DSE_VERSION
+        if getattr(request, "is_impersonating", False):
+            ctx["show_privacy_banner"] = False
+        else:
+            user_dse = getattr(request.user, "_privacy_version", None) or getattr(request.user, "privacy_version", None) or ""
+            ctx["show_privacy_banner"] = user_dse != CURRENT_DSE_VERSION
         ctx["current_dse_version"] = CURRENT_DSE_VERSION
     else:
         ctx["show_privacy_banner"] = False
