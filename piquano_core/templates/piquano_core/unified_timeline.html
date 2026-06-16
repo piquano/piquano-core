@@ -71,6 +71,7 @@
     <div class="utl-panel" id="utlPanelEmail" role="tabpanel" aria-labelledby="utlBtnEmail" hidden>
       <form method="post" action="{{ email_compose_url }}" class="utl-panel__form" id="utlEmailForm">
         {% csrf_token %}
+        {% if email_compose_contact_pk %}<input type="hidden" name="contact" value="{{ email_compose_contact_pk }}">{% endif %}
         <div class="utl-panel__fields">
           <div class="utl-field">
             <label class="utl-field__label" for="utlEmailTo">An</label>
