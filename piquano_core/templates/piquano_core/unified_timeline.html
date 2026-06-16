@@ -87,6 +87,13 @@
             <textarea name="body" id="utlEmailBody" class="utl-input utl-input--textarea" rows="4"
                       placeholder="Nachricht verfassen..." required></textarea>
           </div>
+          {% if email_signature_html %}
+          <div style="margin-top:4px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; font-size:12px; color:#64748b; pointer-events:none; user-select:none;">
+            <div style="border-top:1px solid #d1d5db; padding-top:8px;">
+              {{ email_signature_html|safe }}
+            </div>
+          </div>
+          {% endif %}
         </div>
         <div class="utl-panel__actions">
           <button type="button" class="utl-btn utl-btn--ghost" onclick="utlClosePanel()">Abbrechen</button>
