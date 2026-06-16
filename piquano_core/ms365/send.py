@@ -38,9 +38,21 @@ class SendResult:
 def _get_mail_account(user_email: str):
     """MailAccount für eine E-Mail-Adresse finden.
 
-    Versucht zuerst das lokale ORM-Model (CRM), dann die Bridge (ATS/App).
+    Versucht zuerst das lokale ORM-Model (CRM hat eigene ms365-App),
+    dann piquano-core Model, dann die Bridge (ATS/App).
     """
-    # Versuch 1: lokales MailAccount-Model (CRM hat es direkt)
+    # Versuch 1: App-lokales MailAccount-Model (CRM hat eigene ms365-App)
+    try:
+        from django.apps import apps
+
+        MailAccount = apps.get_model("ms365", "MailAccount")
+        account = MailAccount.objects.filter(upn__iexact=user_email).first()
+        if account:
+            return account
+    except (LookupError, Exception):
+        pass
+
+    # Versuch 2: piquano-core MailAccount (falls in INSTALLED_APPS)
     try:
         from .models import MailAccount
 
@@ -50,7 +62,7 @@ def _get_mail_account(user_email: str):
     except Exception:
         pass
 
-    # Versuch 2: Bridge (ATS und andere Apps)
+    # Versuch 3: Bridge (ATS und andere Apps ohne eigenes ms365-Model)
     try:
         from .bridge import get_connected_accounts
 
