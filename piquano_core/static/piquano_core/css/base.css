@@ -610,5 +610,9 @@ td a {
 .badge-red    { background: #fee4e2; color: var(--piquano-danger); }
 .badge-yellow { background: #fef3c7; color: var(--piquano-warning); }
 
+/* Quill-Editor: Bullet-Listen werden als <ol><li data-list="bullet"> gespeichert */
+ol li[data-list="bullet"] { list-style-type: disc; }
+ol li[data-list="bullet"] .ql-ui { display: none; }
+
 /* Utility */
 .u-hidden { display: none; }
