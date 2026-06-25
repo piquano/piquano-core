@@ -89,11 +89,16 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
             "extra": {"note_type": n.note_type, "note_type_label": _note_type_label(n.note_type)},
         })
 
-    # Emails: bei Partnern alle @piquano.com-Absender ausblenden,
+    # Emails: bei Partnern alle von Piquano gesendeten E-Mails ausblenden
+    # (@piquano.com-Absender + System-Mails ohne Absender),
     # sonst nur interne @piquano.com → @piquano.com
     email_qs = SharedEmail.objects.filter(q)
     if hide_piquano_sender:
-        email_qs = email_qs.exclude(from_email__iendswith="@piquano.com")
+        email_qs = email_qs.exclude(
+            from_email__iendswith="@piquano.com",
+        ).exclude(
+            from_email="", direction="outbound",
+        )
     else:
         email_qs = email_qs.exclude(
             from_email__iendswith="@piquano.com",
