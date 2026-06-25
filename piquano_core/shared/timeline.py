@@ -87,8 +87,11 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
             "extra": {"note_type": n.note_type, "note_type_label": _note_type_label(n.note_type)},
         })
 
-    # Emails
-    for e in SharedEmail.objects.filter(q).order_by("-created_at")[:limit]:
+    # Emails (interne @piquano.com → @piquano.com ausblenden)
+    for e in SharedEmail.objects.filter(q).exclude(
+        from_email__iendswith="@piquano.com",
+        to_email__iendswith="@piquano.com",
+    ).order_by("-created_at")[:limit]:
         dt = e.sent_at or e.received_at or e.created_at
         entries.append({
             "type": "email",
