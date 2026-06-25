@@ -49,7 +49,7 @@ def _note_type_label(note_type):
     }.get(note_type, "Notiz")
 
 
-def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_cutoff=None):
+def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_cutoff=None, hide_piquano_sender=False):
     """Build a unified timeline from shared models.
 
     Returns a list of dicts ready for the unified_timeline.html template.
@@ -57,6 +57,8 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
     Args:
         notes_cutoff: Optional datetime — if set, only notes created after
             this date are included. E-Mails and activities are not affected.
+        hide_piquano_sender: If True, exclude all emails sent from @piquano.com
+            (used for partner timelines where internal mails are irrelevant).
     """
     from django.db.models import Q
 
@@ -87,11 +89,17 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
             "extra": {"note_type": n.note_type, "note_type_label": _note_type_label(n.note_type)},
         })
 
-    # Emails (interne @piquano.com → @piquano.com ausblenden)
-    for e in SharedEmail.objects.filter(q).exclude(
-        from_email__iendswith="@piquano.com",
-        to_email__iendswith="@piquano.com",
-    ).order_by("-created_at")[:limit]:
+    # Emails: bei Partnern alle @piquano.com-Absender ausblenden,
+    # sonst nur interne @piquano.com → @piquano.com
+    email_qs = SharedEmail.objects.filter(q)
+    if hide_piquano_sender:
+        email_qs = email_qs.exclude(from_email__iendswith="@piquano.com")
+    else:
+        email_qs = email_qs.exclude(
+            from_email__iendswith="@piquano.com",
+            to_email__iendswith="@piquano.com",
+        )
+    for e in email_qs.order_by("-created_at")[:limit]:
         dt = e.sent_at or e.received_at or e.created_at
         entries.append({
             "type": "email",
