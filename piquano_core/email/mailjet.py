@@ -117,12 +117,16 @@ class MailjetClient:
         text_body: str | None = None,
         unsubscribe_url: str | None = None,
         custom_id: str | None = None,
+        attachments: list[dict] | None = None,
     ) -> MailjetResult:
         """Send a single transactional email.
 
         Returns a :class:`MailjetResult`. Does not raise — callers log the
         result and decide whether to retry. For exception-style flow use
         :meth:`send_or_raise`.
+
+        ``attachments`` is a list of dicts with keys:
+        ``ContentType``, ``Filename``, ``Base64Content``.
         """
         message: dict = {
             "From": {"Email": self.sender, "Name": self.sender_name},
@@ -136,6 +140,8 @@ class MailjetClient:
             message["Headers"] = {"List-Unsubscribe": f"<{unsubscribe_url}>"}
         if custom_id:
             message["CustomID"] = custom_id
+        if attachments:
+            message["Attachments"] = attachments
 
         try:
             resp = _SESSION.post(
