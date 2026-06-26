@@ -118,6 +118,7 @@ class MailjetClient:
         unsubscribe_url: str | None = None,
         custom_id: str | None = None,
         attachments: list[dict] | None = None,
+        cc: list[dict] | None = None,
     ) -> MailjetResult:
         """Send a single transactional email.
 
@@ -127,6 +128,8 @@ class MailjetClient:
 
         ``attachments`` is a list of dicts with keys:
         ``ContentType``, ``Filename``, ``Base64Content``.
+
+        ``cc`` is a list of dicts with keys: ``Email``, ``Name``.
         """
         message: dict = {
             "From": {"Email": self.sender, "Name": self.sender_name},
@@ -134,6 +137,8 @@ class MailjetClient:
             "Subject": subject,
             "HTMLPart": html_body,
         }
+        if cc:
+            message["Cc"] = cc
         if text_body:
             message["TextPart"] = text_body
         if unsubscribe_url:
