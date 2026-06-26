@@ -1,6 +1,6 @@
 """
-Context Processor: stellt piquano_toggles, piquano_permissions
-und pq_topbar in allen Templates bereit.
+Context Processor: stellt piquano_toggles, piquano_permissions,
+pq_topbar und pq_env in allen Templates bereit.
 
 piquano_toggles ist ein dict mit underscore-Keys fuer Template dot-notation:
   {% if piquano_toggles.crm_reports %}
@@ -10,6 +10,59 @@ from __future__ import annotations
 
 from django.conf import settings
 from django.urls import reverse, NoReverseMatch
+
+# ── Environment-Mapping (Prod ↔ Staging Domains) ──────────────────
+_APP_DOMAINS = {
+    "app": {"prod": "app.piquano.com", "staging": "app-next.piquano.com"},
+    "crm": {"prod": "crm.piquano.com", "staging": "staging.crm.piquano.com"},
+    "ats": {"prod": "ats.piquano.com", "staging": "staging.ats.piquano.com"},
+    "lms": {"prod": "lms.piquano.com", "staging": "staging.lms.piquano.com"},
+    "support": {"prod": "support.piquano.com", "staging": "staging.support.piquano.com"},
+    "content": {"prod": "content.piquano.com", "staging": "staging.content.piquano.com"},
+}
+
+_STAGING_HOSTS = {v["staging"] for v in _APP_DOMAINS.values()}
+
+
+class _AttrDict(dict):
+    """Dict mit Attribut-Zugriff fuer Django-Template dot-notation."""
+
+    def __getattr__(self, key):
+        if key.startswith("_"):
+            return super().__getattribute__(key)
+        try:
+            return self[key]
+        except KeyError:
+            return ""
+
+
+def _build_env_context(request, app_id):
+    """Erkennt Staging/Prod und baut URL-Mapping fuer Templates."""
+    host = request.get_host().split(":")[0]
+    is_staging = host in _STAGING_HOSTS or host == "localhost"
+
+    env = "staging" if is_staging else "prod"
+    other_env = "prod" if is_staging else "staging"
+
+    # Domain-Dict fuer aktuelle Umgebung (Template: {{ pq_env.domains.crm }})
+    domains = _AttrDict({k: v[env] for k, v in _APP_DOMAINS.items()})
+
+    # Switch-URL: gleicher Pfad, andere Umgebung
+    current_domains = _APP_DOMAINS.get(app_id, {})
+    switch_domain = current_domains.get(other_env, current_domains.get("prod", ""))
+    switch_url = f"https://{switch_domain}{request.get_full_path()}" if switch_domain else ""
+
+    return _AttrDict(
+        {
+            "current": env,
+            "is_staging": is_staging,
+            "is_prod": not is_staging,
+            "switch_env": other_env,
+            "switch_url": switch_url,
+            "domains": domains,
+        }
+    )
+
 
 # Topbar-Konfiguration pro App (Schluessel = PIQUANO_ADMIN_CENTER_APP)
 _TOPBAR_APPS = {
@@ -177,5 +230,8 @@ def piquano_context(request):
         "search_url": search_url,
         "search_placeholder": app_cfg["search_placeholder"],
     }
+
+    # ── Environment (Staging/Prod) ─────────────────────────────────
+    ctx["pq_env"] = _build_env_context(request, app_id)
 
     return ctx
