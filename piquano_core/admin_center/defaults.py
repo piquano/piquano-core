@@ -81,6 +81,8 @@ PERMISSION_LABELS = {
     "write": "Bearbeiten",
     "delete": "Löschen",
     "merge": "Zusammenführen",
+    "approve": "Freigeben",
+    "deliver": "Ausliefern",
 }
 
 PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
@@ -121,6 +123,7 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "opportunities": ["read", "write"],
         "experten_beitrag": ["read", "write"],
         "events": ["read", "write"],
+        "onboarding": ["read", "write", "approve", "deliver"],
     },
     "lms": {
         "courses": ["read", "write", "delete"],
