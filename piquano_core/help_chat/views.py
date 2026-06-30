@@ -78,26 +78,20 @@ def help_chat_proxy(request):
 @require_POST
 @login_required
 def bug_report_proxy(request):
-    """Proxy: Bug-Report aus dem Help-Chat-Widget an das Support-Backend weiterleiten."""
+    """Proxy: Bug-Report aus dem Help-Chat-Widget an das Support-Backend weiterleiten.
+
+    In der Support-App (HELP_CHAT_APP_KEY=support) wird die lokale View
+    direkt aufgerufen statt über HTTP — verhindert Proxy-Selbstaufruf.
+    """
     token = os.getenv("HELP_CHAT_TOKEN", "")
     app_key = os.getenv("HELP_CHAT_APP_KEY", "")
     support_url = os.getenv("SUPPORT_BUG_API_URL", "")
 
-    if not token or not support_url:
+    if not token:
         return JsonResponse(
             {"error": "Bug-Report ist nicht konfiguriert."},
             status=503,
         )
-
-    # FormData weiterleiten — Felder + Dateien + User-Infos ergänzen
-    post_data = {
-        "title": request.POST.get("title", ""),
-        "url": request.POST.get("url", ""),
-        "expected": request.POST.get("expected", ""),
-        "actual": request.POST.get("actual", ""),
-        "requester_email": request.user.email,
-        "requester_name": request.user.get_full_name() or request.user.username,
-    }
 
     # Meta-Daten vom Frontend + App-Key ergänzen
     meta_raw = request.POST.get("meta") or "{}"
@@ -106,7 +100,37 @@ def bug_report_proxy(request):
     except (json.JSONDecodeError, ValueError):
         meta = {}
     meta["app"] = app_key
-    post_data["meta"] = json.dumps(meta)
+
+    # User-Infos aus Session ergänzen
+    post_data = {
+        "title": request.POST.get("title", ""),
+        "url": request.POST.get("url", ""),
+        "expected": request.POST.get("expected", ""),
+        "actual": request.POST.get("actual", ""),
+        "requester_email": request.user.email,
+        "requester_name": request.user.get_full_name() or request.user.username,
+        "meta": json.dumps(meta),
+    }
+
+    # Support-App: lokale View direkt aufrufen (kein HTTP-Proxy nötig)
+    if app_key == "support":
+        try:
+            from tickets.views import api_create_bug
+
+            # Request manipulieren: Token-Header setzen, POST-Daten ersetzen
+            request.META["HTTP_X_HELP_CHAT_TOKEN"] = token
+            request.POST = request.POST.copy()
+            for key, val in post_data.items():
+                request.POST[key] = val
+            return api_create_bug(request)
+        except ImportError:
+            pass  # Fallback auf HTTP-Proxy
+
+    if not support_url:
+        return JsonResponse(
+            {"error": "Bug-Report ist nicht konfiguriert."},
+            status=503,
+        )
 
     # Dateien als Liste von Tuples für requests
     files_list = []
