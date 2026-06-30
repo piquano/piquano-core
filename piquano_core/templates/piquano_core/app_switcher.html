@@ -18,5 +18,9 @@
     <a href="https://{{ pq_env.domains.support }}" class="app-switcher-sidebar__icon{% if pq_topbar.app_id == 'support' %} is-active{% endif %}" title="Support">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 11-12.728 0M12 3v0m-4.95 1.05v0M5.636 8.636v0M5 12v0m.636 3.364v0M8.05 18.95v0M12 21v0m3.95-2.05v0m2.414-2.586v0M19 12v0m-.636-3.364v0M15.95 5.05v0"/><circle cx="12" cy="12" r="3"/></svg>
     </a>
+    {% else %}
+    <span class="app-switcher-sidebar__icon is-disabled" title="Support (nur für Administratoren)">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="20" height="20" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636a9 9 0 11-12.728 0M12 3v0m-4.95 1.05v0M5.636 8.636v0M5 12v0m.636 3.364v0M8.05 18.95v0M12 21v0m3.95-2.05v0m2.414-2.586v0M19 12v0m-.636-3.364v0M15.95 5.05v0"/><circle cx="12" cy="12" r="3"/></svg>
+    </span>
     {% endif %}
 </nav>

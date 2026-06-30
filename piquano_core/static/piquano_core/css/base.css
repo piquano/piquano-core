@@ -371,6 +371,11 @@ a:hover { text-decoration: underline; }
   background: var(--piquano-button);
   color: #fff;
 }
+.app-switcher-sidebar__icon.is-disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
 .app-switcher-sidebar__badge {
   position: absolute;
   top: 2px; right: 2px;
