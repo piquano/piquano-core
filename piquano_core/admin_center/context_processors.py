@@ -149,7 +149,7 @@ class _PermDict(dict):
         return self.get(key, False)
 
 
-CURRENT_DSE_VERSION = "3.1"
+CURRENT_DSE_VERSION = "3.2"
 
 
 def piquano_context(request):
