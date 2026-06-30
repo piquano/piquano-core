@@ -118,7 +118,10 @@ def bug_report_proxy(request):
             support_url,
             data=post_data,
             files=files_list if files_list else None,
-            headers={"X-Help-Chat-Token": token},
+            headers={
+                "X-Help-Chat-Token": token,
+                "X-Forwarded-Proto": "https",
+            },
             timeout=30,
         )
         return JsonResponse(resp.json(), status=resp.status_code)
