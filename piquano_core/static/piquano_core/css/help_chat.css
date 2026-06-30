@@ -51,13 +51,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 16px;
+    padding: 10px 16px;
     background: #133447;
     color: #fff;
     font-size: 15px;
     font-weight: 600;
 }
-.pq-help-header button {
+#pq-help-close {
     background: none;
     border: none;
     color: #fff;
@@ -65,6 +65,31 @@
     cursor: pointer;
     line-height: 1;
     padding: 0 2px;
+}
+
+/* Tabs im Header */
+.pq-help-tabs {
+    display: flex;
+    gap: 0;
+}
+.pq-help-tab {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.55);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 4px 10px 6px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color .15s, border-color .15s;
+    font-family: inherit;
+}
+.pq-help-tab.pq-tab-active {
+    color: #fff;
+    border-bottom-color: #fff;
+}
+.pq-help-tab:hover:not(.pq-tab-active) {
+    color: rgba(255,255,255,0.8);
 }
 
 /* Body */
@@ -171,10 +196,180 @@
 #pq-help-send:hover { background: #2a7ab0; }
 #pq-help-send:disabled { background: #aaa; cursor: not-allowed; }
 
+/* ─── Bug-Report-Formular ─────────────────────────────────────── */
+
+/* Formular-Body */
+#pq-bug-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 16px;
+    max-height: 360px;
+}
+.pq-bug-field {
+    margin-bottom: 12px;
+}
+.pq-bug-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #133447;
+    margin-bottom: 4px;
+}
+.pq-bug-required {
+    color: #328cc1;
+}
+.pq-bug-optional {
+    font-weight: 400;
+    color: #888;
+}
+.pq-bug-input,
+.pq-bug-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #222;
+    resize: vertical;
+    outline: none;
+    transition: border-color .15s;
+}
+.pq-bug-input:focus,
+.pq-bug-textarea:focus {
+    border-color: #328cc1;
+}
+.pq-bug-input.pq-field-error,
+.pq-bug-textarea.pq-field-error {
+    border-color: #c0392b;
+}
+.pq-bug-textarea {
+    min-height: 68px;
+}
+.pq-bug-hint {
+    font-size: 12px;
+    color: #888;
+    margin-top: 3px;
+}
+.pq-bug-error-msg {
+    font-size: 12px;
+    color: #c0392b;
+    margin-top: 3px;
+    display: none;
+}
+.pq-bug-error-msg.pq-visible {
+    display: block;
+}
+
+/* Upload-Bereich */
+.pq-bug-dropzone {
+    border: 1.5px dashed #c5d8e4;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: 13px;
+    color: #328cc1;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+.pq-bug-dropzone:hover {
+    background: #eef4f9;
+    border-color: #328cc1;
+}
+.pq-bug-file-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+.pq-bug-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: #eef4f9;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 12px;
+    color: #133447;
+}
+.pq-bug-pill-remove {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #888;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+}
+.pq-bug-pill-remove:hover { color: #c0392b; }
+
+/* Submit-Footer */
+.pq-bug-footer {
+    border-top: 1px solid #e8e8e8;
+    padding: 10px 16px;
+    background: #fafafa;
+}
+.pq-bug-submit {
+    width: 100%;
+    background: #328cc1;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    transition: background .15s;
+}
+.pq-bug-submit:hover { background: #2a7ab0; }
+.pq-bug-submit:disabled { background: #aaa; cursor: not-allowed; }
+
+/* Erfolgszustand */
+.pq-bug-success {
+    padding: 24px 16px;
+    text-align: center;
+    color: #133447;
+}
+.pq-bug-success-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: #e6f4ec;
+    color: #2e7d32;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    font-size: 24px;
+}
+.pq-bug-success-ticket {
+    font-weight: 600;
+    font-size: 15px;
+    margin: 8px 0 4px;
+}
+.pq-bug-success-sub {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 20px;
+}
+.pq-bug-reset-link {
+    font-size: 13px;
+    color: #328cc1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-decoration: underline;
+    font-family: inherit;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     #pq-help-panel {
         width: calc(100vw - 32px);
         right: -8px;
     }
+    .pq-bug-submit { width: 100%; }
+    .pq-bug-textarea { min-height: 56px; }
 }

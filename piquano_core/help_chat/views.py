@@ -72,3 +72,64 @@ def help_chat_proxy(request):
             {"error": "Verbindung zum Hilfe-Service fehlgeschlagen."},
             status=502,
         )
+
+
+@csrf_exempt
+@require_POST
+@login_required
+def bug_report_proxy(request):
+    """Proxy: Bug-Report aus dem Help-Chat-Widget an das Support-Backend weiterleiten."""
+    token = os.getenv("HELP_CHAT_TOKEN", "")
+    app_key = os.getenv("HELP_CHAT_APP_KEY", "")
+    support_url = os.getenv("SUPPORT_BUG_API_URL", "")
+
+    if not token or not support_url:
+        return JsonResponse(
+            {"error": "Bug-Report ist nicht konfiguriert."},
+            status=503,
+        )
+
+    # FormData weiterleiten — Felder + Dateien + User-Infos ergänzen
+    post_data = {
+        "title": request.POST.get("title", ""),
+        "url": request.POST.get("url", ""),
+        "expected": request.POST.get("expected", ""),
+        "actual": request.POST.get("actual", ""),
+        "requester_email": request.user.email,
+        "requester_name": request.user.get_full_name() or request.user.username,
+    }
+
+    # Meta-Daten vom Frontend + App-Key ergänzen
+    meta_raw = request.POST.get("meta") or "{}"
+    try:
+        meta = json.loads(meta_raw)
+    except (json.JSONDecodeError, ValueError):
+        meta = {}
+    meta["app"] = app_key
+    post_data["meta"] = json.dumps(meta)
+
+    # Dateien als Liste von Tuples für requests
+    files_list = []
+    for f in request.FILES.getlist("files"):
+        files_list.append(("files", (f.name, f, f.content_type or "application/octet-stream")))
+
+    try:
+        resp = http_requests.post(
+            support_url,
+            data=post_data,
+            files=files_list if files_list else None,
+            headers={"X-Help-Chat-Token": token},
+            timeout=30,
+        )
+        return JsonResponse(resp.json(), status=resp.status_code)
+    except http_requests.Timeout:
+        return JsonResponse(
+            {"error": "Die Übermittlung hat zu lange gedauert. Bitte versuch es nochmal."},
+            status=504,
+        )
+    except Exception:
+        logger.exception("Bug-Report Proxy Fehler")
+        return JsonResponse(
+            {"error": "Verbindung zum Support-Service fehlgeschlagen."},
+            status=502,
+        )

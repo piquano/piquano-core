@@ -1,5 +1,5 @@
 {% load static %}
-{# Help-Chat Widget — auf jeder Seite per {% include %} einbinden #}
+{# Help-Chat Widget + Bug-Report — auf jeder Seite per {% include %} einbinden #}
 
 <link rel="stylesheet" href="{% static 'piquano_core/css/help_chat.css' %}">
 
@@ -14,17 +14,84 @@
 
   <div id="pq-help-panel" class="pq-help-hidden">
     <div class="pq-help-header">
-      <span>Hilfe</span>
+      <div class="pq-help-tabs">
+        <button class="pq-help-tab pq-tab-active" data-tab="chat" type="button">Hilfe</button>
+        <button class="pq-help-tab" data-tab="bug" type="button">Bug melden</button>
+      </div>
       <button id="pq-help-close" type="button" aria-label="Schließen">&times;</button>
     </div>
+
+    <!-- Chat-Body -->
     <div id="pq-help-body">
       <p class="pq-help-intro">Frag mich, wie eine Funktion auf dieser Seite funktioniert.</p>
     </div>
-    <div class="pq-help-input-row">
+    <div class="pq-help-input-row" id="pq-help-input-row">
       <input id="pq-help-input" type="text" placeholder="Deine Frage..." autocomplete="off">
       <button id="pq-help-send" type="button" aria-label="Frage senden">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
       </button>
+    </div>
+
+    <!-- Bug-Report-Body (initial versteckt) -->
+    <div id="pq-bug-body" style="display:none">
+      <form id="pq-bug-form" novalidate>
+        <div class="pq-bug-field">
+          <label class="pq-bug-label" for="pq-bug-title">
+            Titel <span class="pq-bug-required">*</span>
+          </label>
+          <input class="pq-bug-input" id="pq-bug-title" type="text"
+                 placeholder="z.B. Speichern klappt nicht im Kontakt-Edit"
+                 maxlength="120" autocomplete="off" aria-required="true">
+          <div class="pq-bug-error-msg" id="pq-bug-title-err"></div>
+        </div>
+
+        <div class="pq-bug-field">
+          <label class="pq-bug-label" for="pq-bug-url">
+            Seite <span class="pq-bug-required">*</span>
+          </label>
+          <input class="pq-bug-input" id="pq-bug-url" type="url" aria-required="true">
+          <div class="pq-bug-hint">Automatisch aus deiner aktuellen Seite übernommen.</div>
+          <div class="pq-bug-error-msg" id="pq-bug-url-err"></div>
+        </div>
+
+        <div class="pq-bug-field">
+          <label class="pq-bug-label" for="pq-bug-expected">
+            Was sollte passieren? <span class="pq-bug-required">*</span>
+          </label>
+          <textarea class="pq-bug-textarea" id="pq-bug-expected" rows="3"
+                    placeholder="Ich wollte den Kontakt speichern und danach zur Detailansicht zurückkehren."
+                    aria-required="true"></textarea>
+          <div class="pq-bug-error-msg" id="pq-bug-expected-err"></div>
+        </div>
+
+        <div class="pq-bug-field">
+          <label class="pq-bug-label" for="pq-bug-actual">
+            Was passiert stattdessen? <span class="pq-bug-required">*</span>
+          </label>
+          <textarea class="pq-bug-textarea" id="pq-bug-actual" rows="3"
+                    placeholder="Nach dem Klick auf Speichern kam eine rote Fehlermeldung, die Seite hat sich nicht aktualisiert."
+                    aria-required="true"></textarea>
+          <div class="pq-bug-error-msg" id="pq-bug-actual-err"></div>
+        </div>
+
+        <div class="pq-bug-field">
+          <label class="pq-bug-label">Dateien <span class="pq-bug-optional">(optional)</span></label>
+          <div class="pq-bug-dropzone" id="pq-bug-dropzone" role="button" tabindex="0"
+               aria-label="Datei hinzufügen">
+            + Screenshot oder Datei hinzufügen
+          </div>
+          <input type="file" id="pq-bug-fileinput" multiple
+                 accept="image/*,.pdf" style="display:none">
+          <div class="pq-bug-hint">Bilder oder PDF, max. 5 MB pro Datei, bis zu 3 Dateien</div>
+          <div class="pq-bug-file-pills" id="pq-bug-pills"></div>
+          <div class="pq-bug-error-msg" id="pq-bug-file-err"></div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Bug-Submit-Footer (initial versteckt) -->
+    <div class="pq-bug-footer" id="pq-bug-footer" style="display:none">
+      <button class="pq-bug-submit" id="pq-bug-submit" type="button">Bug melden</button>
     </div>
   </div>
 </div>
