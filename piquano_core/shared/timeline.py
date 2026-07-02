@@ -104,9 +104,23 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
             from_email__iendswith="@piquano.com",
             to_email__iendswith="@piquano.com",
         )
+
+    # Dedup: Mailjet erzeugt pro Empfänger unterschiedliche Message-IDs,
+    # daher landen Multi-Postfach-Kopien + das Versand-Original als separate
+    # SharedEmail-Einträge. Zusammenfassen über subject+from+to im 5-Min-Fenster.
+    seen_email_keys = {}
     for e in email_qs.order_by("-created_at")[:limit]:
         dt = e.sent_at or e.received_at or e.created_at
-        entries.append({
+        # Dedup-Schlüssel: subject + from + to, gerundet auf 5-Minuten-Fenster
+        bucket = int(dt.timestamp()) // 300
+        dedup_key = (e.subject, e.from_email, e.to_email, bucket)
+        if dedup_key in seen_email_keys:
+            # outbound (Versand-Original) bevorzugen gegenüber inbound (Sync-Kopie)
+            if e.direction == "outbound":
+                seen_email_keys[dedup_key]["direction"] = "outbound"
+                seen_email_keys[dedup_key]["source"] = e.app_source
+            continue
+        entry = {
             "type": "email",
             "date": dt,
             "date_group": _date_group(dt),
@@ -121,7 +135,9 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
                 "to_email": e.to_email,
                 "body_html": e.body_html,
             },
-        })
+        }
+        seen_email_keys[dedup_key] = entry
+        entries.append(entry)
 
     # Activities
     for a in SharedActivity.objects.filter(q).order_by("-created_at")[:limit]:

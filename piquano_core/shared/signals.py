@@ -30,6 +30,22 @@ def _mirror_ats_email(sender, instance, created, **kwargs):
         ).exists():
             return
 
+        # Fallback-Dedup: subject+from+candidate im 2-Minuten-Fenster
+        from datetime import timedelta
+        sent_at = instance.sent_at
+        from_email = instance.from_email or ""
+        if sent_at and from_email:
+            window_start = sent_at - timedelta(seconds=120)
+            window_end = sent_at + timedelta(seconds=120)
+            if SharedEmail.objects.using("shared").filter(
+                ats_candidate_id=instance.candidate_id,
+                from_email=from_email,
+                subject=instance.subject or "",
+                created_at__gte=window_start,
+                created_at__lte=window_end,
+            ).exists():
+                return
+
         SharedEmail.objects.create(
             app_source="ats",
             from_email=instance.from_email or "",
@@ -75,6 +91,23 @@ def _mirror_crm_email(sender, instance, created, **kwargs):
             graph_message_id=instance.graph_message_id
         ).exists():
             return
+
+        # Fallback-Dedup: Mailjet generiert pro Empfänger verschiedene Message-IDs.
+        # Multi-Postfach-Kopien werden über subject+from+contact+Zeitfenster erkannt.
+        from datetime import timedelta
+        received_at = getattr(instance, "received_at", None)
+        from_email = instance.from_email or ""
+        if received_at and from_email:
+            window_start = received_at - timedelta(seconds=120)
+            window_end = received_at + timedelta(seconds=120)
+            if SharedEmail.objects.using("shared").filter(
+                crm_contact_id=instance.contact_id,
+                from_email=from_email,
+                subject=instance.subject or "",
+                created_at__gte=window_start,
+                created_at__lte=window_end,
+            ).exists():
+                return
 
         direction_map = {"out": "outbound", "in": "inbound"}
         status_map = {
