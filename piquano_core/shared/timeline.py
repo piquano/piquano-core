@@ -139,8 +139,12 @@ def build_timeline(ats_candidate_id=None, crm_contact_id=None, limit=50, notes_c
         seen_email_keys[dedup_key] = entry
         entries.append(entry)
 
-    # Activities
-    for a in SharedActivity.objects.filter(q).order_by("-created_at")[:limit]:
+    # Activities — note_added und email_sent ausschließen, weil Notizen und
+    # E-Mails bereits als eigene Einträge in der Timeline erscheinen.
+    activity_qs = SharedActivity.objects.filter(q).exclude(
+        activity_type__in=("note_added", "email_sent"),
+    )
+    for a in activity_qs.order_by("-created_at")[:limit]:
         # Alert-Subscriptions als eigenen Typ "alert" durchreichen
         entry_type = "alert" if a.activity_type == "alert_subscribed" else "activity"
         entries.append({
