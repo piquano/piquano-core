@@ -1,7 +1,7 @@
-{% extends "base.html" %}
+{% extends "hub_admin/base.html" %}
 {% block title %}Funktionskatalog — Admin-Center{% endblock %}
 
-{% block content %}
+{% block ac_extra_css %}
 <style>
 .cat-vertical { margin-bottom:20px; }
 .cat-vertical__header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; background:#f1f5f9; border-bottom:1px solid #e2e8f0; }
@@ -18,12 +18,9 @@
 .cat-add-form { display:flex; gap:8px; align-items:center; padding:8px 20px 8px 36px; }
 .cat-add-form input { font-size:13px; padding:4px 10px; border:1px solid #e2e8f0; border-radius:6px; flex:1; }
 </style>
+{% endblock %}
 
-<div class="page-header" style="display:flex; justify-content:space-between; align-items:center;">
-    <h1>Funktionskatalog</h1>
-</div>
-
-{% include "piquano_admin_center/_nav.html" with nav_active="catalog" %}
+{% block ac_content %}
 
 {% for item in vertical_data %}
 <div class="card cat-vertical">
@@ -69,4 +66,4 @@
     </form>
 </div>
 
-{% endblock %}
+{% endblock ac_content %}

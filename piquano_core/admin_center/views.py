@@ -603,7 +603,7 @@ def catalog_list(request):
     return render(
         request,
         "piquano_admin_center/catalog_list.html",
-        {"vertical_data": vertical_data},
+        {"vertical_data": vertical_data, "nav_group": "katalog"},
     )
 
 
