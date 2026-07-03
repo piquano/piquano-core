@@ -33,6 +33,9 @@ urlpatterns = [
     path("katalog/subfunktion/add/", views.catalog_add_subfunktion, name="catalog_add_subfunktion"),
     path("katalog/vertical/<uuid:pk>/delete/", views.catalog_delete_vertical, name="catalog_delete_vertical"),
     path("katalog/subfunktion/<uuid:pk>/delete/", views.catalog_delete_subfunktion, name="catalog_delete_subfunktion"),
+    # E-Mail-Log
+    path("email-log/", views.email_log, name="email_log"),
+    path("email-log/<uuid:pk>/", views.email_log_detail, name="email_log_detail"),
     # Internal API for central Admin Center
     path("api/", include("piquano_core.admin_center.api_urls")),
 ]

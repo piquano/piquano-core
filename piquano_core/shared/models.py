@@ -312,3 +312,87 @@ class CatalogAssignment(models.Model):
 
     def __str__(self):
         return f"{self.get_entity_type_display()} {self.entity_id} → {self.sub_funktion}"
+
+
+# ---------------------------------------------------------------------------
+# Email Log (zentrales Versand-Protokoll)
+# ---------------------------------------------------------------------------
+
+class EmailLogApp(models.TextChoices):
+    APP = "app", "App"
+    CRM = "crm", "CRM"
+    ATS = "ats", "ATS"
+    LMS = "lms", "LMS"
+    SUPPORT = "support", "Support"
+    CONTENT = "content", "Content"
+    CORE = "core", "Core"
+    CRON = "cron", "Cron-Agent"
+
+
+class EmailLogStatus(models.TextChoices):
+    SENT = "sent", "Gesendet"
+    FAILED = "failed", "Fehlgeschlagen"
+
+
+class EmailLog(models.Model):
+    """Zentrales Protokoll aller System-E-Mails über alle Apps."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    app = models.CharField("App", max_length=10, choices=EmailLogApp.choices)
+    email_type = models.CharField("Typ", max_length=80)
+    recipient = models.EmailField("Empfänger")
+    subject = models.CharField("Betreff", max_length=500)
+    status = models.CharField(
+        max_length=10, choices=EmailLogStatus.choices, default=EmailLogStatus.SENT,
+    )
+    error_message = models.TextField("Fehler", blank=True)
+    body_html = models.TextField("HTML-Inhalt", blank=True)
+    mailjet_message_id = models.CharField(max_length=100, blank=True)
+    sent_at = models.DateTimeField("Gesendet am", auto_now_add=True)
+
+    class Meta:
+        db_table = "email_log"
+        ordering = ["-sent_at"]
+        indexes = [
+            models.Index(fields=["-sent_at"]),
+            models.Index(fields=["app", "-sent_at"]),
+            models.Index(fields=["email_type", "-sent_at"]),
+            models.Index(fields=["recipient", "-sent_at"]),
+        ]
+        verbose_name = "E-Mail-Log"
+        verbose_name_plural = "E-Mail-Logs"
+
+    def __str__(self):
+        return f"{self.get_app_display()} → {self.recipient}: {self.subject[:60]}"
+
+    @classmethod
+    def log(
+        cls,
+        *,
+        app: str,
+        email_type: str,
+        recipient: str,
+        subject: str,
+        status: str = "sent",
+        error_message: str = "",
+        body_html: str = "",
+        mailjet_message_id: str = "",
+    ):
+        """Erstellt einen Log-Eintrag. Fehler werden geloggt, nie geworfen."""
+        import logging
+
+        try:
+            cls.objects.using("shared").create(
+                app=app,
+                email_type=email_type,
+                recipient=recipient,
+                subject=subject,
+                status=status,
+                error_message=error_message,
+                body_html=body_html,
+                mailjet_message_id=mailjet_message_id,
+            )
+        except Exception as exc:
+            logging.getLogger(__name__).warning(
+                "EmailLog.log fehlgeschlagen: %s", exc,
+            )

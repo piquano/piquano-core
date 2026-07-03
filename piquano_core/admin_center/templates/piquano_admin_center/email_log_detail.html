@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}E-Mail-Detail -- Admin-Center{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>E-Mail-Detail</h1>
+</div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="email_log" %}
+
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-body">
+        <table style="width:100%; max-width:600px;">
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; vertical-align:top; white-space:nowrap; color:#666;">Zeitpunkt</td>
+                <td style="padding:6px 0;">{{ entry.sent_at|date:"d.m.Y H:i:s" }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; color:#666;">App</td>
+                <td style="padding:6px 0;">{{ entry.get_app_display }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; color:#666;">Typ</td>
+                <td style="padding:6px 0;">{{ entry.email_type }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; color:#666;">Empfänger</td>
+                <td style="padding:6px 0;">{{ entry.recipient }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; color:#666;">Betreff</td>
+                <td style="padding:6px 0;">{{ entry.subject }}</td>
+            </tr>
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; color:#666;">Status</td>
+                <td style="padding:6px 0;">
+                    {% if entry.status == "sent" %}
+                    <span class="badge badge-green">Gesendet</span>
+                    {% else %}
+                    <span class="badge badge-red">Fehler</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% if entry.error_message %}
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; color:#666;">Fehler</td>
+                <td style="padding:6px 0; color:#dc2626;">{{ entry.error_message }}</td>
+            </tr>
+            {% endif %}
+            {% if entry.mailjet_message_id %}
+            <tr>
+                <td style="font-weight:600; padding:6px 16px 6px 0; color:#666;">Mailjet-ID</td>
+                <td style="padding:6px 0; font-family:monospace; font-size:12px;">{{ entry.mailjet_message_id }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+{% if entry.body_html %}
+<div class="card">
+    <div class="card-header" style="padding:12px 16px; font-weight:600; border-bottom:1px solid #e2e8f0;">
+        E-Mail-Inhalt
+    </div>
+    <div class="card-body" style="padding:0;">
+        <iframe srcdoc="{{ entry.body_html }}" style="width:100%; min-height:500px; border:none;" sandbox="allow-same-origin"></iframe>
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top:16px;">
+    <a href="{% url 'piquano_admin_center:email_log' %}" class="btn btn-secondary" style="font-size:13px; padding:6px 14px;">&laquo; Zurück zur Liste</a>
+</div>
+{% endblock %}

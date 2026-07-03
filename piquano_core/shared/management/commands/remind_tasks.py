@@ -189,6 +189,15 @@ class Command(BaseCommand):
             ok = _send_mailjet(recipient, "", subject, html)
             if ok:
                 self.stdout.write(self.style.SUCCESS(f"  Reminder gesendet an {recipient}"))
+                from piquano_core.shared.models import EmailLog
+
+                EmailLog.log(
+                    app="core",
+                    email_type="Aufgaben-Reminder",
+                    recipient=recipient,
+                    subject=subject,
+                    status="sent",
+                )
             else:
                 self.stdout.write(self.style.ERROR(f"  Mail fehlgeschlagen: {recipient}"))
 

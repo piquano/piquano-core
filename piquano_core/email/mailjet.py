@@ -119,6 +119,9 @@ class MailjetClient:
         custom_id: str | None = None,
         attachments: list[dict] | None = None,
         cc: list[dict] | None = None,
+        *,
+        log_app: str = "",
+        log_type: str = "",
     ) -> MailjetResult:
         """Send a single transactional email.
 
@@ -157,23 +160,60 @@ class MailjetClient:
             )
         except requests.RequestException as exc:
             logger.warning("Mailjet request error: %s", exc)
-            return MailjetResult(success=False, error=str(exc))
+            result = MailjetResult(success=False, error=str(exc))
+            self._log(log_app, log_type, to_email, subject, html_body, result)
+            return result
 
         try:
             data = resp.json()
         except ValueError:
-            return MailjetResult(success=False, error=f"HTTP {resp.status_code}: invalid JSON")
+            result = MailjetResult(success=False, error=f"HTTP {resp.status_code}: invalid JSON")
+            self._log(log_app, log_type, to_email, subject, html_body, result)
+            return result
 
         if resp.status_code != 200 or not data.get("Messages"):
-            return MailjetResult(success=False, error=f"HTTP {resp.status_code}")
+            result = MailjetResult(success=False, error=f"HTTP {resp.status_code}")
+            self._log(log_app, log_type, to_email, subject, html_body, result)
+            return result
 
         msg = data["Messages"][0]
         if msg.get("Status") != "success":
             error = (msg.get("Errors") or [{}])[0].get("ErrorMessage", "Unknown error")
-            return MailjetResult(success=False, error=error)
+            result = MailjetResult(success=False, error=error)
+            self._log(log_app, log_type, to_email, subject, html_body, result)
+            return result
 
         msg_id = str(msg["To"][0]["MessageID"]) if msg.get("To") else ""
-        return MailjetResult(success=True, message_id=msg_id)
+        result = MailjetResult(success=True, message_id=msg_id)
+        self._log(log_app, log_type, to_email, subject, html_body, result)
+        return result
+
+    @staticmethod
+    def _log(
+        app: str,
+        email_type: str,
+        recipient: str,
+        subject: str,
+        body_html: str,
+        result: MailjetResult,
+    ) -> None:
+        if not app or not email_type:
+            return
+        try:
+            from piquano_core.shared.models import EmailLog, EmailLogStatus
+
+            EmailLog.log(
+                app=app,
+                email_type=email_type,
+                recipient=recipient,
+                subject=subject,
+                status=EmailLogStatus.SENT if result.success else EmailLogStatus.FAILED,
+                error_message=result.error,
+                body_html=body_html[:50_000] if body_html else "",
+                mailjet_message_id=result.message_id,
+            )
+        except Exception as exc:
+            logger.warning("EmailLog failed: %s", exc)
 
     def send_or_raise(self, **kwargs) -> str:
         """Like :meth:`send` but raises :class:`MailjetError` on failure.
@@ -186,6 +226,6 @@ class MailjetClient:
         return result.message_id
 
 
-def send_transactional(**kwargs) -> MailjetResult:
+def send_transactional(*, log_app: str = "", log_type: str = "", **kwargs) -> MailjetResult:
     """Convenience: send via the cached settings-based client."""
-    return MailjetClient.from_settings().send(**kwargs)
+    return MailjetClient.from_settings().send(**kwargs, log_app=log_app, log_type=log_type)

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}E-Mail-Log -- Admin-Center{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>E-Mail-Log <span style="font-size:14px; color:#666; font-weight:normal;">({{ total }} Einträge)</span></h1>
+</div>
+
+{% include "piquano_admin_center/_nav.html" with nav_active="email_log" %}
+
+{# Filter #}
+<div class="card" style="margin-bottom:16px;">
+    <div class="card-body" style="padding:12px 16px;">
+        <form method="get" style="display:flex; gap:10px; flex-wrap:wrap; align-items:end;">
+            <div>
+                <label style="font-size:12px; color:#666; display:block;">App</label>
+                <select name="app" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+                    <option value="">Alle</option>
+                    {% for val, label in app_choices %}
+                    <option value="{{ val }}" {% if val == app_filter %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; color:#666; display:block;">Typ</label>
+                <select name="type" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+                    <option value="">Alle</option>
+                    {% for t in email_types %}
+                    <option value="{{ t }}" {% if t == type_filter %}selected{% endif %}>{{ t }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; color:#666; display:block;">Empfänger</label>
+                <input type="text" name="recipient" value="{{ recipient_filter }}" placeholder="E-Mail..." style="padding:5px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; width:180px;">
+            </div>
+            <div>
+                <label style="font-size:12px; color:#666; display:block;">Status</label>
+                <select name="status" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+                    <option value="">Alle</option>
+                    {% for val, label in status_choices %}
+                    <option value="{{ val }}" {% if val == status_filter %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="font-size:12px; color:#666; display:block;">Von</label>
+                <input type="date" name="from" value="{{ date_from }}" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+            </div>
+            <div>
+                <label style="font-size:12px; color:#666; display:block;">Bis</label>
+                <input type="date" name="to" value="{{ date_to }}" style="padding:5px 8px; border:1px solid #d1d5db; border-radius:6px; font-size:13px;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="font-size:13px; padding:6px 14px;">Filtern</button>
+            {% if app_filter or type_filter or recipient_filter or status_filter or date_from or date_to %}
+            <a href="{% url 'piquano_admin_center:email_log' %}" class="btn btn-secondary" style="font-size:13px; padding:6px 14px;">Zurücksetzen</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+{# Tabelle #}
+<div class="card">
+    <div class="card-body" style="padding:0;">
+        <table style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Zeitpunkt</th>
+                    <th>App</th>
+                    <th>Typ</th>
+                    <th>Empfänger</th>
+                    <th>Betreff</th>
+                    <th style="text-align:center;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in page_obj %}
+                <tr style="cursor:pointer;" onclick="window.location='{% url 'piquano_admin_center:email_log_detail' entry.pk %}'">
+                    <td style="white-space:nowrap; font-size:13px;">{{ entry.sent_at|date:"d.m.Y H:i" }}</td>
+                    <td>
+                        <span class="badge badge-gray" style="font-size:11px;">{{ entry.get_app_display }}</span>
+                    </td>
+                    <td style="font-size:13px;">{{ entry.email_type }}</td>
+                    <td style="font-size:13px;">{{ entry.recipient }}</td>
+                    <td style="font-size:13px; max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ entry.subject|truncatechars:60 }}</td>
+                    <td style="text-align:center;">
+                        {% if entry.status == "sent" %}
+                        <span class="badge badge-green">Gesendet</span>
+                        {% else %}
+                        <span class="badge badge-red">Fehler</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" style="text-align:center; padding:24px; color:#999;">Keine E-Mails gefunden.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# Paginierung #}
+{% if page_obj.has_other_pages %}
+<div style="display:flex; justify-content:center; gap:8px; margin-top:16px;">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if app_filter %}&app={{ app_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if recipient_filter %}&recipient={{ recipient_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&from={{ date_from }}{% endif %}{% if date_to %}&to={{ date_to }}{% endif %}" class="btn btn-secondary" style="font-size:13px; padding:6px 14px;">&laquo; Zurück</a>
+    {% endif %}
+    <span style="padding:8px 12px; font-size:13px; color:#666;">Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if app_filter %}&app={{ app_filter }}{% endif %}{% if type_filter %}&type={{ type_filter }}{% endif %}{% if recipient_filter %}&recipient={{ recipient_filter }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if date_from %}&from={{ date_from }}{% endif %}{% if date_to %}&to={{ date_to }}{% endif %}" class="btn btn-secondary" style="font-size:13px; padding:6px 14px;">Weiter &raquo;</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

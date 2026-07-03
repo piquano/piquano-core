@@ -702,3 +702,85 @@ def catalog_delete_subfunktion(request, pk):
     sf.delete(using="shared")
     messages.success(request, f"Sub-Funktion '{name}' und alle Zuordnungen geloescht.")
     return redirect("piquano_admin_center:catalog")
+
+
+# ---------------------------------------------------------------------------
+# E-Mail-Log
+# ---------------------------------------------------------------------------
+
+@_staff_required
+def email_log(request):
+    """Zentrales E-Mail-Versand-Protokoll über alle Apps."""
+    from django.core.paginator import Paginator
+
+    from piquano_core.shared.models import EmailLog, EmailLogApp, EmailLogStatus
+
+    qs = EmailLog.objects.using("shared").all()
+
+    # Filter
+    app_filter = request.GET.get("app", "").strip()
+    type_filter = request.GET.get("type", "").strip()
+    recipient_filter = request.GET.get("recipient", "").strip()
+    status_filter = request.GET.get("status", "").strip()
+    date_from = request.GET.get("from", "").strip()
+    date_to = request.GET.get("to", "").strip()
+
+    if app_filter:
+        qs = qs.filter(app=app_filter)
+    if type_filter:
+        qs = qs.filter(email_type__icontains=type_filter)
+    if recipient_filter:
+        qs = qs.filter(recipient__icontains=recipient_filter)
+    if status_filter:
+        qs = qs.filter(status=status_filter)
+    if date_from:
+        qs = qs.filter(sent_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(sent_at__date__lte=date_to)
+
+    paginator = Paginator(qs, 50)
+    page_obj = paginator.get_page(request.GET.get("page", 1))
+
+    # Distinct email_types für Filter-Dropdown
+    email_types = (
+        EmailLog.objects.using("shared")
+        .values_list("email_type", flat=True)
+        .distinct()
+        .order_by("email_type")
+    )
+
+    return render(
+        request,
+        "piquano_admin_center/email_log.html",
+        {
+            "page_obj": page_obj,
+            "total": paginator.count,
+            "app_choices": EmailLogApp.choices,
+            "status_choices": EmailLogStatus.choices,
+            "email_types": email_types,
+            "app_filter": app_filter,
+            "type_filter": type_filter,
+            "recipient_filter": recipient_filter,
+            "status_filter": status_filter,
+            "date_from": date_from,
+            "date_to": date_to,
+            "nav_active": "email_log",
+        },
+    )
+
+
+@_staff_required
+def email_log_detail(request, pk):
+    """Zeigt den HTML-Inhalt einer geloggten E-Mail."""
+    from piquano_core.shared.models import EmailLog
+
+    entry = EmailLog.objects.using("shared").filter(pk=pk).first()
+    if not entry:
+        messages.error(request, "E-Mail-Log-Eintrag nicht gefunden.")
+        return redirect("piquano_admin_center:email_log")
+
+    return render(
+        request,
+        "piquano_admin_center/email_log_detail.html",
+        {"entry": entry, "nav_active": "email_log"},
+    )
