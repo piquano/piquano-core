@@ -1,0 +1,105 @@
+{# Alle Aufgaben — Listenansicht mit Benutzer-Filter #}
+{% extends "base.html" %}
+
+{% block title %}Alle Aufgaben{% endblock %}
+{% block page_title %}Alle Aufgaben{% endblock %}
+
+{% block content %}
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+  <form method="get" style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+    <label for="user-filter" style="font-size:13px; font-weight:500; color:var(--piquano-text);">Benutzer:</label>
+    <select id="user-filter" name="user" onchange="this.form.submit()" style="padding:6px 12px; border:1px solid #d1d5db; border-radius:6px; font-size:13px; min-width:200px;">
+      <option value="">Alle Benutzer</option>
+      {% for email in available_users %}
+      <option value="{{ email }}" {% if email == selected_user %}selected{% endif %}>{{ email }}</option>
+      {% endfor %}
+    </select>
+    <label style="font-size:13px; color:var(--piquano-text-muted); display:flex; align-items:center; gap:4px; cursor:pointer;">
+      <input type="checkbox" name="done" value="1" {% if show_done %}checked{% endif %} onchange="this.form.submit()"> Erledigte zeigen
+    </label>
+  </form>
+  <div style="flex:1;"></div>
+  <span style="font-size:13px; color:var(--piquano-text-muted);">{{ tasks|length }} Aufgabe{{ tasks|length|pluralize:"n" }}</span>
+</div>
+
+{% csrf_token %}
+
+<div class="card">
+  <div class="card-body" style="padding:0; overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:13px; table-layout:fixed;">
+      <colgroup>
+        <col style="width:36px;">
+        <col style="width:80px;">
+        <col style="width:72px;">
+        <col>
+        <col style="width:180px;">
+        <col style="width:160px;">
+      </colgroup>
+      <thead>
+        <tr style="background:#f9fafb; border-bottom:2px solid #e5e7eb;">
+          <th style="padding:10px 12px;"></th>
+          <th style="padding:10px 12px; text-align:left; font-weight:600;">Status</th>
+          <th style="padding:10px 12px; text-align:left; font-weight:600;">Fällig</th>
+          <th style="padding:10px 12px; text-align:left; font-weight:600;">Aufgabe</th>
+          <th style="padding:10px 12px; text-align:left; font-weight:600;">Bezug</th>
+          <th style="padding:10px 12px; text-align:left; font-weight:600;">Zuständig</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in tasks %}
+        <tr id="task-{{ t.pk }}" style="border-bottom:1px solid #f3f4f6;{% if t.is_done %} opacity:0.45;{% endif %}">
+          <td style="padding:7px 12px; text-align:center;">
+            {% if not t.is_done %}
+            <input type="checkbox" style="width:15px; height:15px; accent-color:var(--piquano-button); cursor:pointer;" onchange="markTaskDone('{{ t.pk }}', this)">
+            {% else %}
+            <span style="color:var(--piquano-button); font-size:14px;">✓</span>
+            {% endif %}
+          </td>
+          <td style="padding:7px 12px;">
+            {% if t.is_done %}
+            <span style="font-size:11px; padding:2px 8px; border-radius:4px; background:#d1fae5; color:#065f46; white-space:nowrap;">Erledigt</span>
+            {% elif t.is_overdue %}
+            <span style="font-size:11px; padding:2px 8px; border-radius:4px; background:#fee2e2; color:#991b1b; white-space:nowrap;">Überfällig</span>
+            {% else %}
+            <span style="font-size:11px; padding:2px 8px; border-radius:4px; background:#dbeafe; color:#1e40af; white-space:nowrap;">Offen</span>
+            {% endif %}
+          </td>
+          <td style="padding:7px 12px; white-space:nowrap; {% if t.is_overdue %}color:var(--piquano-danger); font-weight:600;{% else %}color:var(--piquano-text-muted);{% endif %}">
+            {{ t.due_date|date:"d.m." }}
+          </td>
+          <td style="padding:7px 12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            {% if t.is_done %}<span style="text-decoration:line-through;">{{ t.subject|default:"(ohne Titel)" }}</span>{% else %}{{ t.subject|default:"(ohne Titel)" }}{% endif %}
+          </td>
+          <td style="padding:7px 12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            {% if t.ats_candidate_id %}<a href="{{ task_candidate_url }}{{ t.ats_candidate_id }}/" style="color:var(--piquano-button); text-decoration:none;">{{ t.related_name|default:"Kandidat" }}</a>{% elif t.crm_contact_id %}<a href="{{ task_contact_url }}{{ t.crm_contact_id }}/" style="color:var(--piquano-button); text-decoration:none;">{{ t.related_name|default:"Kontakt" }}</a>{% else %}<span style="color:var(--piquano-text-muted);">{{ t.related_name|default:"—" }}</span>{% endif %}
+          </td>
+          <td style="padding:7px 12px; color:var(--piquano-text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+            {{ t.assigned_to_name|default:t.performed_by_name|default:"—" }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="padding:24px; text-align:center; color:var(--piquano-text-muted);">Keine Aufgaben gefunden.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function markTaskDone(taskId, checkbox) {
+  var row = document.getElementById('task-' + taskId);
+  var csrf = document.querySelector('[name=csrfmiddlewaretoken]');
+  var csrfVal = csrf ? csrf.value : (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+  fetch('{{ task_done_url_prefix|default:"/aufgaben/" }}' + taskId + '/done/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': csrfVal, 'Content-Type': 'application/json' },
+  }).then(function(r) {
+    if (r.ok && row) {
+      row.style.opacity = '0.4';
+      row.style.textDecoration = 'line-through';
+      setTimeout(function() { row.remove(); }, 800);
+    }
+  });
+}
+</script>
+{% endblock %}

@@ -7,8 +7,9 @@
 .task-row .task-person{color:var(--piquano-text-muted);font-size:11px;font-style:italic;margin-left:2px;}
 </style>
 <div class="card task-card">
-  <div class="card-header">
+  <div class="card-header" style="display:flex; align-items:center; justify-content:space-between;">
     <h2>Aufgaben <span style="background:var(--piquano-button); color:#fff; font-size:11px; font-weight:600; padding:2px 7px; border-radius:10px; margin-left:6px;">{{ tasks_total }}</span></h2>
+    {% if show_all_tasks_link %}<a href="{{ all_tasks_url }}" style="font-size:12px; color:var(--piquano-button); text-decoration:none; font-weight:500;">Alle anzeigen</a>{% endif %}
   </div>
   <div class="card-body" style="padding:0; max-height:360px; overflow-y:auto;">
 
