@@ -16,6 +16,8 @@ SCOPES = [
     "Mail.Send",
     "Mail.ReadWrite",
     "User.Read",
+    "Files.Read.All",
+    "Sites.Read.All",
 ]
 
 AUTHORITY_TEMPLATE = "https://login.microsoftonline.com/{tenant}"

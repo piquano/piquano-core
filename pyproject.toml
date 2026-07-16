@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "piquano-core"
-version = "1.4.0"
+version = "1.4.2"
 description = "Shared building blocks for Piquano Django apps (auth, CRM client, MS365 mail, audit)"
 readme = "README.md"
 requires-python = ">=3.10"
