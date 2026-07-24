@@ -586,3 +586,79 @@ def api_entity_catalog(request, entity_type, entity_id):
         })
 
     return JsonResponse({"assignments": result})
+
+
+# ---------------------------------------------------------------------------
+# KI-Aufruf-Log (EU AI Act Art. 12) — nur vom ATS bereitgestellt
+# ---------------------------------------------------------------------------
+
+@csrf_exempt
+@require_GET
+def api_ki_log(request):
+    """KI-Aufruf-Protokoll für den Hub Admin Center Logfiles-Bereich.
+
+    Nur verfügbar wenn die App ein AICallLog-Model hat (ATS).
+    Andere Apps liefern leere Ergebnisliste zurück.
+    """
+    if not _check_api_token(request):
+        return JsonResponse({"error": "Unauthorized"}, status=401)
+
+    try:
+        from candidates.ai_log import AICallLog, AICallLog as _M
+    except ImportError:
+        return JsonResponse({"results": [], "total": 0, "num_pages": 1, "page": 1})
+
+    from django.core.paginator import Paginator
+
+    qs = AICallLog.objects.all()
+
+    system = request.GET.get("system", "").strip()
+    status = request.GET.get("status", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+    page_num = request.GET.get("page", "1")
+    per_page_raw = request.GET.get("per_page", "50")
+    try:
+        per_page = min(int(per_page_raw), 5000)
+    except (ValueError, TypeError):
+        per_page = 50
+
+    if system:
+        qs = qs.filter(system=system)
+    if status:
+        qs = qs.filter(status=status)
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
+
+    paginator = Paginator(qs, per_page)
+    page_obj = paginator.get_page(page_num)
+
+    results = [
+        {
+            "id": str(e.id),
+            "system": e.system,
+            "system_display": e.get_system_display(),
+            "status": e.status,
+            "status_display": e.get_status_display(),
+            "triggered_by": e.triggered_by,
+            "candidate_id": e.candidate_id,
+            "job_id": e.job_id,
+            "model_id": e.model_id,
+            "input_summary": e.input_summary,
+            "output_summary": e.output_summary,
+            "error_message": e.error_message,
+            "created_at": e.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        for e in page_obj
+    ]
+
+    return JsonResponse({
+        "results": results,
+        "total": paginator.count,
+        "num_pages": paginator.num_pages,
+        "page": page_obj.number,
+        "system_choices": AICallLog.SYSTEM_CHOICES,
+        "status_choices": AICallLog.STATUS_CHOICES,
+    })

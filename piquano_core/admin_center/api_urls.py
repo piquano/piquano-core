@@ -33,6 +33,8 @@ urlpatterns = [
         api_views.api_save_team_permissions,
         name="api_save_team_permissions",
     ),
+    # KI-Aufruf-Log (EU AI Act)
+    path("ki-log/", api_views.api_ki_log, name="api_ki_log"),
     # Funktionskatalog
     path("catalog/", api_views.api_catalog, name="api_catalog"),
     path(

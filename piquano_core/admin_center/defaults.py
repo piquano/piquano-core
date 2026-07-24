@@ -74,6 +74,8 @@ MODULE_LABELS = {
     "content.templates": "Vorlagen",
     "content.linkedin": "LinkedIn-Integration",
     "content.analytics": "Auswertung",
+    "content.suggestions": "Ideen-Pool",
+    "content.sources": "Quellen-Konfiguration",
 }
 
 PERMISSION_LABELS = {
@@ -146,6 +148,8 @@ PIQUANO_APP_REGISTRY: dict[str, dict[str, list[str]]] = {
         "templates": ["read", "write"],
         "linkedin": ["read", "write"],
         "analytics": ["read"],
+        "suggestions": ["read", "write", "delete"],
+        "sources": ["read", "write", "delete"],
     },
 }
 
